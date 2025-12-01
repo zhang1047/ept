@@ -282,7 +282,7 @@
     <div class="tabs">
       <button class="tab-btn active" data-target="desktopView">电脑版</button>
       <button class="tab-btn" data-target="mobileView">手机版</button>
-      <!-- 一键伪装按钮（不加 tab-btn，不影响 Tab 逻辑） -->
+      <!-- 新增：一键伪装按钮（只是普通 button，不加 tab-btn） -->
       <button id="btnFake" style="margin-left:auto;">一键伪装</button>
     </div>
 
@@ -591,7 +591,7 @@
       })(btns[k]);
     }
 
-    // 新增：暴露给 Script 2 的“一键伪装”函数
+    // 新增：暴露给 Script 3 的“一键伪装”函数
     window.fakeLockToCalc = function () {
       calcDisplay = "0";
       calcExpr = "";
@@ -605,7 +605,7 @@
   })();
 </script>
 
-<!-- ============ Script 2：字典 / SplitMix64 / Tab（和计算器独立） ============ -->
+<!-- ============ Script 2：字典 / SplitMix64 / Tab（保持你原来的代码，不做任何修改） ============ -->
 <script>
   (function () {
     // 顶部 Tab 自动识别设备
@@ -648,16 +648,6 @@
     }
 
     initTabs();
-
-    // 新增：一键伪装按钮，调用 Script 1 暴露的 fakeLockToCalc
-    var fakeBtn = document.getElementById("btnFake");
-    if (fakeBtn) {
-      fakeBtn.addEventListener("click", function () {
-        if (window.fakeLockToCalc) {
-          window.fakeLockToCalc();
-        }
-      });
-    }
 
     // ===== 固定字符全集 & SplitMix64 =====
     function fixedCharset() {
@@ -855,7 +845,7 @@
             outputArea.value = "请先输入秘钥并加载字典。";
             return;
           }
-          var raw = inputArea。value。trim();
+          var raw = inputArea.value.trim();
           if (!raw) {
             outputArea.value = "";
             return;
@@ -864,39 +854,39 @@
           var n = id2char.length;
           var outChars = [];
           var bad = [];
-          parts。forEach(function (p) {
+          parts.forEach(function (p) {
             if (!p) return;
             var num = Number.parseInt(p, 10);
-            if (!Number。isFinite(num)) {
-              bad。push(p);
+            if (!Number.isFinite(num)) {
+              bad.push(p);
               return;
             }
             if (num >= 1 && num <= n) outChars.push(id2char[num - 1]);
-            else bad。push(p);
+            else bad.push(p);
           });
-          var textOut = outChars.join("");
+          var textOut = outChars。join("");
           if (bad.length > 0) {
             textOut += "\n\n[提示] 无效/超范围编号已忽略：\n" + JSON.stringify(bad, null, 2);
           }
-          outputArea.value = textOut;
+          outputArea。value = textOut;
         });
       }
 
       if (btnCopy) {
-        btnCopy.addEventListener("click"， async function () {
+        btnCopy。addEventListener("click"， async function () {
           try {
             await navigator.clipboard.writeText(outputArea.value || "");
             alert("输出内容已复制到剪贴板。");
           } catch (e) {
-            console.error(e);
+            console。error(e);
             alert("复制失败，请手动 Ctrl+C。");
           }
         });
       }
 
       if (btnClear) {
-        btnClear.addEventListener("click", function () {
-          inputArea.value = "";
+        btnClear。addEventListener("click"， function () {
+          inputArea。value = "";
           outputArea.value = "";
         });
       }
@@ -906,5 +896,20 @@
     initView("Mobile");
   })();
 </script>
+
+<!-- ============ Script 3：单独给“一键伪装”绑事件，完全不动 Script 2 ============ -->
+<script>
+  (function () {
+    var fakeBtn = document.getElementById("btnFake");
+    if (fakeBtn) {
+      fakeBtn.addEventListener("click", function () {
+        if (window.fakeLockToCalc) {
+          window.fakeLockToCalc();
+        }
+      });
+    }
+  })();
+</script>
+
 </body>
 </html>
