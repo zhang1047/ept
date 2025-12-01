@@ -3,8 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <title>秘钥字典：文字 &lt;-&gt; 编号（网页版）</title>
-
-  <!-- 手机上按真实宽度渲染 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <style>
@@ -16,7 +14,7 @@
       font-family: "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       font-size: 16px;
     }
-    。panel {
+    .panel {
       max-width: 1100px;
       margin: 0 auto;
       padding: 16px;
@@ -58,18 +56,18 @@
       line-height: 1.5;
       font-family: Consolas, "Microsoft YaHei", monospace;
     }
-    。row {
+    .row {
       display: flex;
       align-items: center;
       gap: 8px;
       margin-bottom: 8px;
       flex-wrap: wrap;
     }
-    。row .grow {
+    .row .grow {
       flex: 1;
       min-width: 150px;
     }
-    。info {
+    .info {
       margin: 6px 0 12px;
       color: #CFCFCF;
       white-space: pre-line;
@@ -97,7 +95,7 @@
       margin: 10px 0 4px;
       font-weight: bold;
     }
-  
+
     /* 顶部 Tab（字典界面） */
     .tabs {
       display: flex;
@@ -124,7 +122,7 @@
     .view-container.active {
       display: block;
     }
-  
+
     /* 手机版字典布局 */
     .mobile-layout textarea {
       min-height: 140px;
@@ -146,7 +144,7 @@
     .mobile-layout input[type="password"] {
       width: 100%;
     }
-  
+
     /* 计算器布局 */
     #gateView {
       margin-top: 8px;
@@ -182,7 +180,7 @@
     .calc-equal {
       grid-column: 1 / span 4;
     }
-  
+
     /* 意见反馈弹窗整体遮罩 */
     .dialog-mask {
       position: fixed;
@@ -232,14 +230,13 @@
       justify-content: flex-end;
       gap: 8px;
     }
-  
+
     @media (max-width: 768px) {
       .panel {
         padding: 12px;
       }
     }
   </style>
-
 </head>
 <body>
 <div class="panel">
@@ -286,7 +283,6 @@
     <div class="tabs">
       <button class="tab-btn active" data-target="desktopView">电脑版</button>
       <button class="tab-btn" data-target="mobileView">手机版</button>
-      <!-- 新增：一键伪装按钮（只是普通 button，不加 tab-btn） -->
       <button id="btnFake" style="margin-left:auto;">一键伪装</button>
     </div>
 
@@ -378,17 +374,17 @@
   </div>
 </div>
 
-<!-- ============ Script 1：只负责“计算器 + 解锁 + 弹窗” ============ -->
+<!-- ============ Script 1：计算器 + 解锁 + 弹窗 ============ -->
 <script>
   (function () {
     var PIN_KEY = "secret_pin";
 
-    var gateDisplayEl = document。getElementById("gateDisplay");
-    var gateInfoEl = document。getElementById("gateInfo");
-    var feedbackMask = document。getElementById("feedbackMask");
-    var feedbackText = document。getElementById("feedbackText");
-    var feedbackCancel = document。getElementById("feedbackCancel");
-    var feedbackSubmit = document。getElementById("feedbackSubmit");
+    var gateDisplayEl = document.getElementById("gateDisplay");
+    var gateInfoEl = document.getElementById("gateInfo");
+    var feedbackMask = document.getElementById("feedbackMask");
+    var feedbackText = document.getElementById("feedbackText");
+    var feedbackCancel = document.getElementById("feedbackCancel");
+    var feedbackSubmit = document.getElementById("feedbackSubmit");
 
     var calcDisplay = "0";
     var calcExpr = "";
@@ -397,7 +393,7 @@
     var secretEqualCount = 0;
 
     function renderCalc() {
-      gateDisplayEl。textContent = calcDisplay;
+      gateDisplayEl.textContent = calcDisplay;
       gateInfoEl.textContent = calcInfo || "";
     }
 
@@ -495,7 +491,6 @@
       if (title) title.style.display = "block";
     }
 
-    // 新增：切回计算器界面
     function showCalc() {
       var gate = document.getElementById("gateView");
       var app = document.getElementById("appView");
@@ -595,7 +590,7 @@
       })(btns[k]);
     }
 
-    // 新增：暴露给 Script 3 的“一键伪装”函数
+    // 一键伪装给外部调用
     window.fakeLockToCalc = function () {
       calcDisplay = "0";
       calcExpr = "";
@@ -609,11 +604,10 @@
   })();
 </script>
 
-<!-- ============ Script 2：字典 / SplitMix64 / Tab（保持你原来的代码，不做任何修改） ============ -->
-<!-- ============ Script 2：字典 / SplitMix64 / Tab（重写版，避免语法错误） ============ -->
+<!-- ============ Script 2：字典 / SplitMix64 / Tab ============ -->
 <script>
   (function () {
-    // ===== 顶部 Tab 自动识别设备 =====
+    // Tab 自动识别设备
     function initTabs() {
       var tabButtons = document.querySelectorAll(".tab-btn");
       var views = document.querySelectorAll(".view-container");
@@ -659,42 +653,32 @@
 
     initTabs();
 
-    // ===== 固定字符全集 =====
+    // 固定字符全集
     function fixedCharset() {
       var chars = [];
-      // 空白 / 控制
       chars.push("\n");
       chars.push("\r");
       chars.push("\t");
-      // ASCII 可见字符
       for (var i = 0x20; i < 0x7F; i++) {
         chars.push(String.fromCharCode(i));
       }
-      // 全角 ASCII
       for (var j = 0xFF01; j < 0xFF5F; j++) {
         chars.push(String.fromCharCode(j));
       }
-      // 全角空格
       chars.push("\u3000");
-      // 常见中文标点
       var punct = "，。、！？；：‘’“”【】（）《》〈〉——…·「」『』￥％＃＠＆＋－＝／＼｜～｀";
       for (var p = 0; p < punct.length; p++) {
         chars.push(punct[p]);
       }
-      // CJK 统一汉字
       for (var a = 0x4E00; a < 0xA000; a++) {
         chars.push(String.fromCharCode(a));
       }
-      // CJK 扩展 A
       for (var b = 0x3400; b < 0x4DC0; b++) {
         chars.push(String.fromCharCode(b));
       }
-      // 常用符号区
       for (var c = 0x2600; c < 0x27C0; c++) {
         chars.push(String.fromCharCode(c));
       }
-
-      // 去重
       var seen = {};
       var out = [];
       for (var idx = 0; idx < chars.length; idx++) {
@@ -709,7 +693,12 @@
 
     var CHARSET_FIXED = fixedCharset();
 
-    // ===== SplitMix64（用 BigInt() 写法，避免 xxxn 字面量） =====
+    // SplitMix64（BigInt 写法）
+    if (typeof BigInt === "undefined") {
+      alert("当前浏览器不支持 BigInt，请更换为较新的浏览器。");
+      return;
+    }
+
     var MASK64 = (BigInt(1) << BigInt(64)) - BigInt(1);
 
     function SplitMix64(seed) {
@@ -737,40 +726,43 @@
       return Number(x % BigInt(bound));
     };
 
-    // ===== SHA-256 → 64bit seed =====
-    async function sha256ToSeedU64(key) {
+    // SHA-256 → 64bit seed
+    function sha256ToSeedU64(key) {
       var enc = new TextEncoder();
       var data = enc.encode(key.trim());
       if (!window.crypto || !window.crypto.subtle) {
-        throw new Error("当前浏览器不支持 crypto.subtle，请在 HTTPS 环境下使用最新版浏览器。");
+        return Promise.reject(
+          new Error("当前浏览器不支持 crypto.subtle，请在 HTTPS 环境下使用最新版浏览器。")
+        );
       }
-      var hashBuf = await window.crypto.subtle.digest("SHA-256", data);
-      var hash = new Uint8Array(hashBuf);
-      var seed = BigInt(0);
-      for (var i = 0; i < 8; i++) {
-        seed = (seed << BigInt(8)) | BigInt(hash[i]);
-      }
-      return seed & MASK64;
+      return window.crypto.subtle.digest("SHA-256", data).then(function (hashBuf) {
+        var hash = new Uint8Array(hashBuf);
+        var seed = BigInt(0);
+        for (var i = 0; i < 8; i++) {
+          seed = (seed << BigInt(8)) | BigInt(hash[i]);
+        }
+        return seed & MASK64;
+      });
     }
 
-    // ===== 根据秘钥生成打乱后的字符表 =====
-    async function charsetFromKey(key) {
+    // 根据秘钥生成打乱后的字符表
+    function charsetFromKey(key) {
       key = key.trim();
-      if (!key) throw new Error("秘钥不能为空");
-      var seed = await sha256ToSeedU64(key);
-      var rng = new SplitMix64(seed);
-      var shuffled = CHARSET_FIXED.slice();
-      // Fisher-Yates 洗牌
-      for (var i = shuffled.length - 1; i > 0; i--) {
-        var j = rng.nextBounded(i + 1);
-        var tmp = shuffled[i];
-        shuffled[i] = shuffled[j];
-        shuffled[j] = tmp;
-      }
-      return shuffled;
+      if (!key) return Promise.reject(new Error("秘钥不能为空"));
+      return sha256ToSeedU64(key).then(function (seed) {
+        var rng = new SplitMix64(seed);
+        var shuffled = CHARSET_FIXED.slice();
+        for (var i = shuffled.length - 1; i > 0; i--) {
+          var j = rng.nextBounded(i + 1);
+          var tmp = shuffled[i];
+          shuffled[i] = shuffled[j];
+          shuffled[j] = tmp;
+        }
+        return shuffled;
+      });
     }
 
-    // ===== 字典状态 =====
+    // 字典状态
     var shuffled = null;
     var id2char = null;
     var char2id = null;
@@ -779,9 +771,7 @@
       var ids = ["btnText2Id", "btnId2Text", "btnCopy", "btnClear"];
       ids.forEach(function (id) {
         var el = document.getElementById(id + prefix);
-        if (el) {
-          el.disabled = !enabled;
-        }
+        if (el) el.disabled = !enabled;
       });
     }
 
@@ -815,7 +805,6 @@
       enableView("Mobile", false);
     }
 
-    // ===== 初始化单个界面（PC / Mobile 共用） =====
     function initView(prefix) {
       var keyInput   = document.getElementById("keyInput" + prefix);
       var loadBtn    = document.getElementById("loadBtn" + prefix);
@@ -851,7 +840,7 @@
               console.error(e);
               setErrorUI(e && e.message ? e.message : String(e));
             })
-            .finally(function () {
+            .then(function () {
               loadBtn.disabled = false;
             });
         });
@@ -875,7 +864,7 @@
               missing.push(ch);
             }
           }
-          var out = ids。join(sep);
+          var out = ids.join(sep);
           if (missing.length > 0) {
             out += "\n\n[提示] 下列字符不在固定全集中，无法编码：\n" + missing.join("");
           }
@@ -884,18 +873,18 @@
       }
 
       if (btnI2T) {
-        btnI2T。addEventListener("click"， function () {
+        btnI2T.addEventListener("click", function () {
           if (!id2char) {
-            outputArea。value = "请先输入秘钥并加载字典。";
+            outputArea.value = "请先输入秘钥并加载字典。";
             return;
           }
-          var raw = (inputArea。value || "")。trim();
+          var raw = (inputArea.value || "").trim();
           if (!raw) {
             outputArea.value = "";
             return;
           }
-          var parts = raw。split(/[,\s;、，；]+/);
-          var n = id2char。length;
+          var parts = raw.split(/[,\s;、，；]+/);
+          var n = id2char.length;
           var outChars = [];
           var bad = [];
           for (var i = 0; i < parts.length; i++) {
@@ -903,35 +892,34 @@
             if (!p) continue;
             var num = parseInt(p, 10);
             if (!isFinite(num)) {
-              bad。push(p);
+              bad.push(p);
               continue;
             }
             if (num >= 1 && num <= n) {
-              outChars。push(id2char[num - 1]);
+              outChars.push(id2char[num - 1]);
             } else {
-              bad。push(p);
+              bad.push(p);
             }
           }
-          var textOut = outChars。join("");
+          var textOut = outChars.join("");
           if (bad.length > 0) {
-            textOut += "\n\n[提示] 无效/超范围编号已忽略：\n" + JSON。stringify(bad， null, 2);
+            textOut += "\n\n[提示] 无效/超范围编号已忽略：\n" + JSON.stringify(bad, null, 2);
           }
-          outputArea。value = textOut;
+          outputArea.value = textOut;
         });
       }
 
       if (btnCopy) {
-        btnCopy。addEventListener("click"， function () {
-          var text = outputArea。value || "";
+        btnCopy.addEventListener("click", function () {
+          var text = outputArea.value || "";
           if (!navigator.clipboard || !navigator.clipboard.writeText) {
             try {
-              // 兼容性 fallback（可能会失败）
-              var textarea = document。createElement("textarea");
-              textarea。value = text;
-              document。body.appendChild(textarea);
-              textarea。select();
-              document。execCommand("copy");
-              document。body。removeChild(textarea);
+              var ta = document.createElement("textarea");
+              ta.value = text;
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand("copy");
+              document.body.removeChild(ta);
               alert("输出内容已复制到剪贴板。");
             } catch (e) {
               alert("复制失败，请手动 Ctrl+C。");
@@ -959,8 +947,7 @@
   })();
 </script>
 
-
-<!-- ============ Script 3：单独给“一键伪装”绑事件，完全不动 Script 2 ============ -->
+<!-- ============ Script 3：一键伪装按钮 ============ -->
 <script>
   (function () {
     var fakeBtn = document.getElementById("btnFake");
