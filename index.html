@@ -296,8 +296,8 @@
 
       setButtonsEnabled(true);
     } catch (e) {
-      console.error(e);
-      info.textContent = "[错误] " + (e && e.message ? e.message : String(e));
+      console。error(e);
+      info。textContent = "[错误] " + (e && e.message ? e.message : String(e));
       setButtonsEnabled(false);
     } finally {
       loadBtn.disabled = false;
@@ -305,9 +305,9 @@
   });
 
   // 文字 -> 编号
-  btnText2Id.addEventListener("click", () => {
+  btnText2Id。addEventListener("click"， () => {
     if (!char2id) {
-      outputArea.value = "请先输入秘钥并加载字典。";
+      outputArea。value = "请先输入秘钥并加载字典。";
       return;
     }
     const text = inputArea.value;
@@ -317,9 +317,9 @@
 
     for (const ch of text) {
       if (char2id.has(ch)) {
-        ids.push(String(char2id.get(ch)));
+        ids。push(String(char2id。get(ch)));
       } else {
-        missing.push(ch);
+        missing。push(ch);
       }
     }
 
@@ -341,7 +341,7 @@
       outputArea.value = "";
       return;
     }
-    const parts = raw.split(/[,\\s;、，；]+/);
+    const parts = raw.split(/[,\s;、，；]+/);
     const n = id2char.length;
     const outChars = [];
     const bad = [];
