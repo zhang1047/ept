@@ -122,7 +122,7 @@
       display: block;
     }
 
-    /* 手机版整体稍微窄一点、按钮更高一点（参考你安卓 Compose 的 16dp padding + 56dp 高度） */
+    /* 手机版整体稍微窄一点、按钮更高一点（参考安卓 Compose 的 16dp padding + 56dp 高度） */
     .mobile-layout textarea {
       min-height: 140px;
     }
@@ -197,7 +197,7 @@
     </div>
   </div>
 
-  <!-- 手机版视图（布局参考 Android Compose：上中下纵向，大按钮） -->
+  <!-- 手机版视图 -->
   <div id="mobileView" class="view-container mobile-layout">
     <!-- 顶部说明 + 秘钥 -->
     <div class="row row-top">
@@ -242,11 +242,36 @@
 </div>
 
 <script>
-  /* =============== 顶部 Tab 切换 =============== */
+  /* =============== 顶部 Tab 切换 + 自动识别设备 =============== */
   (function initTabs() {
     const tabButtons = document.querySelectorAll(".tab-btn");
     const views = document.querySelectorAll(".view-container");
 
+    // 1) 自动判断当前是否为移动设备（UA + 屏幕宽度双重判断）
+    const isMobile =
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(navigator.userAgent) ||
+      window.innerWidth <= 768;
+
+    const defaultTarget = isMobile ? "mobileView" : "desktopView";
+
+    // 2) 根据判断结果，设置默认激活的 tab 和 view
+    tabButtons.forEach(btn => {
+      const target = btn.getAttribute("data-target");
+      if (target === defaultTarget) {
+        btn.classList.add("active");
+      } else {
+        btn.classList.remove("active");
+      }
+    });
+    views.forEach(view => {
+      if (view.id === defaultTarget) {
+        view.classList.add("active");
+      } else {
+        view.classList.remove("active");
+      }
+    });
+
+    // 3) 仍然支持手动点击切换
     tabButtons.forEach(btn => {
       btn.addEventListener("click", () => {
         const target = btn.getAttribute("data-target");
@@ -487,7 +512,7 @@
       });
     }
 
-    // 编号 -> 文字（这里已经修正为 \s，不会只还原第一个字）
+    // 编号 -> 文字（用 \s，支持空格分隔，不会只还原第一个字）
     if (btnI2T) {
       btnI2T.addEventListener("click", () => {
         if (!id2char) {
@@ -500,7 +525,7 @@
           return;
         }
         // 支持：空格、英文逗号/分号、中文逗号/分号、顿号
-        const parts = raw。split(/[,\s;、，；]+/);
+        const parts = raw.split(/[,\s;、，；]+/);
 
         const n = id2char.length;
         const outChars = [];
@@ -508,20 +533,20 @@
 
         for (const p of parts) {
           if (!p) continue;
-          const num = Number。parseInt(p， 10);
-          if (!Number。isFinite(num)) {
+          const num = Number.parseInt(p, 10);
+          if (!Number.isFinite(num)) {
             bad.push(p);
             continue;
           }
           if (num >= 1 && num <= n) {
             outChars.push(id2char[num - 1]);
           } else {
-            bad。push(p);
+            bad.push(p);
           }
         }
 
         let text = outChars.join("");
-        if (bad。length > 0) {
+        if (bad.length > 0) {
           text += "\n\n[提示] 无效/超范围编号已忽略：\n" + JSON.stringify(bad, null, 2);
         }
         outputArea.value = text;
@@ -530,9 +555,9 @@
 
     // 复制输出
     if (btnCopy) {
-      btnCopy。addEventListener("click"， async () => {
+      btnCopy.addEventListener("click", async () => {
         try {
-          await navigator.clipboard。writeText(outputArea。value || "");
+          await navigator.clipboard.writeText(outputArea.value || "");
           alert("输出内容已复制到剪贴板。");
         } catch (e) {
           console.error(e);
