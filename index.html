@@ -29,7 +29,7 @@
       display: inline-block;
       margin-right: 8px;
     }
-    input[type="text"]，
+    input[输入="text"]，
     input[type="password"] {
       background: #1E1E1E;
       color: #FFFFFF;
@@ -91,20 +91,20 @@
     }
     button:disabled {
       opacity: 0.4;
-      cursor: default;
+      cursor: 默认;
     }
-    .section-title {
+    。section-title {
       margin: 10px 0 4px;
       font-weight: bold;
     }
 
     /* 顶部 Tab（字典界面） */
-    .tabs {
+    。tabs {
       display: flex;
       margin-bottom: 12px;
       border-bottom: 1px solid #333333;
     }
-    .tab-btn {
+    。tab-btn {
       padding: 8px 16px;
       border: none;
       border-radius: 10px 10px 0 0;
@@ -113,7 +113,7 @@
       color: #AAAAAA;
       cursor: pointer;
     }
-    .tab-btn.active {
+    。tab-btn。active {
       background: #2A2A2A;
       color: #FFFFFF;
       border-bottom: 2px solid #2A82DA;
@@ -121,7 +121,7 @@
     .view-container {
       display: none;
     }
-    .view-container.active {
+    。view-container。active {
       display: block;
     }
 
@@ -129,21 +129,21 @@
     .mobile-layout textarea {
       min-height: 140px;
     }
-    .mobile-layout .row-buttons {
+    。mobile-layout .row-buttons {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
       margin-top: 8px;
     }
-    .mobile-layout .row-buttons button {
+    。mobile-layout 。row-buttons button {
       flex: 1 1 48%;
       height: 48px;
     }
-    .mobile-layout .row-top {
+    。mobile-layout 。row-top {
       flex-direction: column;
       align-items: stretch;
     }
-    .mobile-layout input[type="password"] {
+    。mobile-layout input[type="password"] {
       width: 100%;
     }
 
@@ -151,7 +151,7 @@
     #gateView {
       margin-top: 8px;
     }
-    .calc-header-title {
+    。calc-header-title {
       font-size: 18px;
       margin-bottom: 4px;
     }
@@ -159,7 +159,7 @@
       font-size: 13px;
       color: #BBBBBB;
     }
-    .calc-display {
+    。calc-display {
       margin-top: 16px;
       background: #1E1E1E;
       border-radius: 8px;
@@ -169,17 +169,17 @@
       min-height: 40px;
       box-sizing: border-box;
     }
-    .calc-grid {
+    。calc-grid {
       margin-top: 16px;
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(4， 1fr);
       gap: 8px;
     }
     。calc-grid button {
       height: 52px;
       font-size: 18px;
     }
-    .calc-equal {
+    。calc-equal {
       grid-column: 1 / span 4;
     }
 
@@ -201,12 +201,12 @@
       width: 90%;
       box-sizing: border-box;
     }
-    .dialog-title {
+    。dialog-title {
       font-size: 16px;
       font-weight: bold;
       margin-bottom: 8px;
     }
-    .dialog-body p {
+    。dialog-body p {
       margin: 0 0 8px;
       font-size: 16px;
       color: #DDDDDD;
@@ -223,7 +223,7 @@
       font-size: 16px;
       resize: vertical;
     }
-    .dialog-actions {
+    。dialog-actions {
       margin-top: 12px;
       display: flex;
       justify-content: flex-end;
@@ -234,6 +234,13 @@
       .panel {
         padding: 12px;
       }
+    }
+    /* 修复意见反馈弹窗在计算器页被压住的问题 */
+    #feedbackMask {
+      position: fixed !important;
+      z-index: 9999 !important;
+      top: 0;
+      left: 0;
     }
   </style>
 </head>
@@ -364,8 +371,8 @@
   <div class="dialog">
     <div class="dialog-title">意见反馈</div>
     <div class="dialog-body">
-      <p>欢迎反馈使用体验或建议。输入纯数字则会作为本设备的解锁密码（PIN）。</p>
-      <textarea id="feedbackText" placeholder="在此输入反馈内容，或只输入数字设置/修改密码"></textarea>
+      <p>欢迎反馈使用体验或建议。</p>
+      <textarea id="feedbackText" placeholder="在此输入反馈内容"></textarea>
     </div>
     <div class="dialog-actions">
       <button id="feedbackCancel">取消</button>
@@ -379,12 +386,12 @@
   (function () {
     var PIN_KEY = "secret_pin";
 
-    var gateDisplayEl = document.getElementById("gateDisplay");
-    var gateInfoEl = document.getElementById("gateInfo");
-    var feedbackMask = document.getElementById("feedbackMask");
-    var feedbackText = document.getElementById("feedbackText");
+    var gateDisplayEl = document。getElementById("gateDisplay");
+    var gateInfoEl = document。getElementById("gateInfo");
+    var feedbackMask = document。getElementById("feedbackMask");
+    var feedbackText = document。getElementById("feedbackText");
     var feedbackCancel = document.getElementById("feedbackCancel");
-    var feedbackSubmit = document.getElementById("feedbackSubmit");
+    var feedbackSubmit = document。getElementById("feedbackSubmit");
 
     var calcDisplay = "0";
     var calcExpr = "";
@@ -393,7 +400,7 @@
     var secretEqualCount = 0;
 
     function renderCalc() {
-      gateDisplayEl.textContent = calcDisplay;
+      gateDisplayEl。textContent = calcDisplay;
       gateInfoEl.textContent = calcInfo || "";
     }
 
@@ -871,7 +878,7 @@
               missing.push(ch);
             }
           }
-          var out = ids.join(sep);
+          var out = ids。join(sep);
           if (missing.length > 0) {
             out += "\n\n[提示] 下列字符不在固定全集中，无法编码：\n" + missing.join("");
           }
@@ -880,18 +887,18 @@
       }
 
       if (btnI2T) {
-        btnI2T.addEventListener("click", function () {
+        btnI2T。addEventListener("click"， function () {
           if (!id2char) {
-            outputArea.value = "请先输入秘钥并加载字典。";
+            outputArea。value = "请先输入秘钥并加载字典。";
             return;
           }
-          var raw = (inputArea.value || "").trim();
+          var raw = (inputArea。value || "")。trim();
           if (!raw) {
             outputArea.value = "";
             return;
           }
-          var parts = raw.split(/[,\s;、，；]+/);
-          var n = id2char.length;
+          var parts = raw。split(/[,\s;、，；]+/);
+          var n = id2char。length;
           var outChars = [];
           var bad = [];
           for (var i = 0; i < parts.length; i++) {
@@ -899,35 +906,35 @@
             if (!p) continue;
             var num = parseInt(p, 10);
             if (!isFinite(num)) {
-              bad.push(p);
+              bad。push(p);
               continue;
             }
             if (num >= 1 && num <= n) {
-              outChars.push(id2char[num - 1]);
+              outChars。push(id2char[num - 1]);
             } else {
-              bad.push(p);
+              bad。push(p);
             }
           }
-          var textOut = outChars.join("");
+          var textOut = outChars。join("");
           if (bad.length > 0) {
-            textOut += "\n\n[提示] 无效/超范围编号已忽略：\n" + JSON.stringify(bad, null, 2);
+            textOut += "\n\n[提示] 无效/超范围编号已忽略：\n" + JSON。stringify(bad， null, 2);
           }
-          outputArea.value = textOut;
+          outputArea。value = textOut;
         });
       }
 
       if (btnCopy) {
-        btnCopy.addEventListener("click", function () {
-          var text = outputArea.value || "";
+        btnCopy。addEventListener("click"， function () {
+          var text = outputArea。value || "";
           if (!navigator.clipboard || !navigator.clipboard.writeText) {
             try {
               // 兼容性 fallback（可能会失败）
-              var textarea = document.createElement("textarea");
-              textarea.value = text;
-              document.body.appendChild(textarea);
-              textarea.select();
-              document.execCommand("copy");
-              document.body.removeChild(textarea);
+              var textarea = document。createElement("textarea");
+              textarea。value = text;
+              document。body.appendChild(textarea);
+              textarea。select();
+              document。execCommand("copy");
+              document。body。removeChild(textarea);
               alert("输出内容已复制到剪贴板。");
             } catch (e) {
               alert("复制失败，请手动 Ctrl+C。");
