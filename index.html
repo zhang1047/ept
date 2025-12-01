@@ -29,14 +29,14 @@
       display: inline-block;
       margin-right: 8px;
     }
-    input[输入="text"]，
+    input[type="text"],
     input[type="password"] {
       background: #1E1E1E;
       color: #FFFFFF;
       border: 1px solid #333333;
       border-radius: 8px;
       padding: 6px 10px;
-      font-size: 16px;
+      font-size: 16px; /* 防止 iOS 自动放大 */
     }
     input[type="text"]:focus,
     input[type="password"]:focus,
@@ -54,7 +54,7 @@
       border-radius: 8px;
       padding: 8px;
       box-sizing: border-box;
-      font-size: 16px;
+      font-size: 16px; /* 防止 iOS 自动放大 */
       line-height: 1.5;
       font-family: Consolas, "Microsoft YaHei", monospace;
     }
@@ -65,7 +65,7 @@
       margin-bottom: 8px;
       flex-wrap: wrap;
     }
-    。row 。grow {
+    。row .grow {
       flex: 1;
       min-width: 150px;
     }
@@ -79,8 +79,8 @@
       color: #E6E6E6;
       border: 1px solid #3A3A3A;
       border-radius: 10px;
-      padding: 8px 16px;
-      font-size: 16px;
+      padding: 8px 14px;
+      font-size: 14px;
       cursor: pointer;
     }
     button:hover {
@@ -91,20 +91,20 @@
     }
     button:disabled {
       opacity: 0.4;
-      cursor: 默认;
+      cursor: default;
     }
-    。section-title {
+    .section-title {
       margin: 10px 0 4px;
       font-weight: bold;
     }
-
+  
     /* 顶部 Tab（字典界面） */
-    。tabs {
+    .tabs {
       display: flex;
       margin-bottom: 12px;
       border-bottom: 1px solid #333333;
     }
-    。tab-btn {
+    .tab-btn {
       padding: 8px 16px;
       border: none;
       border-radius: 10px 10px 0 0;
@@ -113,7 +113,7 @@
       color: #AAAAAA;
       cursor: pointer;
     }
-    。tab-btn。active {
+    .tab-btn.active {
       background: #2A2A2A;
       color: #FFFFFF;
       border-bottom: 2px solid #2A82DA;
@@ -121,45 +121,45 @@
     .view-container {
       display: none;
     }
-    。view-container。active {
+    .view-container.active {
       display: block;
     }
-
+  
     /* 手机版字典布局 */
     .mobile-layout textarea {
       min-height: 140px;
     }
-    。mobile-layout .row-buttons {
+    .mobile-layout .row-buttons {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
       margin-top: 8px;
     }
-    。mobile-layout 。row-buttons button {
+    .mobile-layout .row-buttons button {
       flex: 1 1 48%;
       height: 48px;
     }
-    。mobile-layout 。row-top {
+    .mobile-layout .row-top {
       flex-direction: column;
       align-items: stretch;
     }
-    。mobile-layout input[type="password"] {
+    .mobile-layout input[type="password"] {
       width: 100%;
     }
-
+  
     /* 计算器布局 */
     #gateView {
       margin-top: 8px;
     }
-    。calc-header-title {
+    .calc-header-title {
       font-size: 18px;
       margin-bottom: 4px;
     }
-    。calc-header-sub {
+    .calc-header-sub {
       font-size: 13px;
       color: #BBBBBB;
     }
-    。calc-display {
+    .calc-display {
       margin-top: 16px;
       background: #1E1E1E;
       border-radius: 8px;
@@ -169,35 +169,34 @@
       min-height: 40px;
       box-sizing: border-box;
     }
-    。calc-grid {
+    .calc-grid {
       margin-top: 16px;
       display: grid;
-      grid-template-columns: repeat(4， 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 8px;
     }
-    。calc-grid button {
+    .calc-grid button {
       height: 52px;
       font-size: 18px;
     }
-    。calc-equal {
+    .calc-equal {
       grid-column: 1 / span 4;
     }
-
-    /* 意见反馈弹窗 */
-    。dialog-mask {
+  
+    /* 意见反馈弹窗整体遮罩 */
+    .dialog-mask {
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      background: rgba(0， 0, 0, 0.7);
-      display: none;
-      align-items: center;
-      justify-content: center;
+      background: rgba(0, 0, 0, 0.7);
+      display: none;              /* JS 打开时改为 flex */
+      align-items: center;        /* 垂直居中 */
+      justify-content: center;    /* 水平居中 */
       z-index: 9999;
     }
-
-    。dialog {
+    .dialog {
       background: #1E1E1E;
       border-radius: 12px;
       padding: 16px;
@@ -205,14 +204,14 @@
       width: 90%;
       box-sizing: border-box;
     }
-    。dialog-title {
+    .dialog-title {
       font-size: 16px;
       font-weight: bold;
       margin-bottom: 8px;
     }
-    。dialog-body p {
+    .dialog-body p {
       margin: 0 0 8px;
-      font-size: 16px;
+      font-size: 14px;
       color: #DDDDDD;
     }
     .dialog-body textarea {
@@ -227,20 +226,20 @@
       font-size: 16px;
       resize: vertical;
     }
-    。dialog-actions {
+    .dialog-actions {
       margin-top: 12px;
       display: flex;
       justify-content: flex-end;
       gap: 8px;
     }
-
+  
     @media (max-width: 768px) {
-      。panel {
+      .panel {
         padding: 12px;
       }
     }
-
   </style>
+
 </head>
 <body>
 <div class="panel">
