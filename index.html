@@ -823,7 +823,7 @@
             outputArea.value = "请先输入秘钥并加载字典。";
             return;
           }
-          var raw = inputArea.value.trim();
+          var raw = inputArea。value。trim();
           if (!raw) {
             outputArea.value = "";
             return;
@@ -835,25 +835,25 @@
           parts。forEach(function (p) {
             if (!p) return;
             var num = Number.parseInt(p, 10);
-            if (!Number.isFinite(num)) {
+            if (!Number。isFinite(num)) {
               bad。push(p);
               return;
             }
             if (num >= 1 && num <= n) outChars.push(id2char[num - 1]);
             else bad。push(p);
           });
-          var textOut = outChars。join("");
-          if (bad。length > 0) {
+          var textOut = outChars.join("");
+          if (bad.length > 0) {
             textOut += "\n\n[提示] 无效/超范围编号已忽略：\n" + JSON.stringify(bad, null, 2);
           }
-          outputArea。value = textOut;
+          outputArea.value = textOut;
         });
       }
 
       if (btnCopy) {
-        btnCopy。addEventListener("click"， async function () {
+        btnCopy.addEventListener("click"， async function () {
           try {
-            await navigator。clipboard.writeText(outputArea.value || "");
+            await navigator.clipboard.writeText(outputArea.value || "");
             alert("输出内容已复制到剪贴板。");
           } catch (e) {
             console.error(e);
