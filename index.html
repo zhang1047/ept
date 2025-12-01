@@ -16,7 +16,7 @@
       font-size: 20px;
       margin-bottom: 8px;
     }
-    .panel {
+    。panel {
       max-width: 1100px;
       margin: 0 auto;
     }
@@ -211,6 +211,11 @@
   async function sha256ToSeedU64(key) {
     const enc = new TextEncoder();
     const data = enc.encode(key.trim());
+
+    if (!window.crypto || !window.crypto.subtle) {
+      throw new Error("当前浏览器不支持 crypto.subtle，请在 HTTPS 环境下使用最新版 Chrome / Edge。");
+    }
+
     const hashBuf = await crypto.subtle.digest("SHA-256", data);
     const hash = new Uint8Array(hashBuf);
 
@@ -236,7 +241,7 @@
       const tmp = shuffled[i];
       shuffled[i] = shuffled[j];
       shuffled[j] = tmp;
-    }
+      }
     return shuffled;
   }
 
@@ -327,22 +332,23 @@
     outputArea.value = out;
   });
 
-  // 编号 -> 文字
-  btnId2Text.addEventListener("click"， () => {
+  // 编号 -> 文字（这是原始的「只能出第一个字」版本）
+  btnId2Text.addEventListener("click", () => {
     if (!id2char) {
       outputArea.value = "请先输入秘钥并加载字典。";
       return;
     }
     const raw = inputArea.value.trim();
     if (!raw) {
-      outputArea。value = "";
+      outputArea.value = "";
       return;
     }
 
-    // 这里是修正后的分割规则：支持空格、英文逗号/分号、中文逗号/分号、顿号
+    // ★ 这是最初的版本（有 bug）：\\s 写成了反斜杠+s
     const parts = raw.split(/[,\s;、，；]+/);
 
-    const n = id2char。length;
+
+    const n = id2char.length;
     const outChars = [];
     const bad = [];
 
@@ -350,19 +356,19 @@
       if (!p) continue;
       const num = Number.parseInt(p, 10);
       if (!Number.isFinite(num)) {
-        bad。push(p);
+        bad.push(p);
         continue;
       }
       if (num >= 1 && num <= n) {
         outChars.push(id2char[num - 1]);
       } else {
-        bad。push(p);
+        bad.push(p);
       }
     }
 
-    let text = outChars。join("");
+    let text = outChars.join("");
     if (bad.length > 0) {
-      text += "\n\n[提示] 无效/超范围编号已忽略：\n" + JSON。stringify(bad， null, 2);
+      text += "\n\n[提示] 无效/超范围编号已忽略：\n" + JSON.stringify(bad, null, 2);
     }
     outputArea.value = text;
   });
@@ -384,5 +390,6 @@
     outputArea.value = "";
   });
 </script>
+
 </body>
 </html>
