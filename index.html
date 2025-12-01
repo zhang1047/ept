@@ -6,19 +6,20 @@
   <style>
     body {
       margin: 0;
-      padding: 16px;
+      padding: 0;
       background: #121212;
       color: #E6E6E6;
       font-family: "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       font-size: 14px;
     }
-    h1 {
-      font-size: 20px;
-      margin-bottom: 8px;
-    }
-    。panel {
+    .panel {
       max-width: 1100px;
       margin: 0 auto;
+      padding: 16px;
+    }
+    h1 {
+      font-size: 20px;
+      margin: 0 0 8px 0;
     }
     label {
       display: inline-block;
@@ -92,46 +93,172 @@
       margin: 10px 0 4px;
       font-weight: bold;
     }
+
+    /* ===== 顶部 Tab 样式 ===== */
+    .tabs {
+      display: flex;
+      margin-bottom: 12px;
+      border-bottom: 1px solid #333333;
+    }
+    .tab-btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 10px 10px 0 0;
+      margin-right: 8px;
+      background: #1E1E1E;
+      color: #AAAAAA;
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      background: #2A2A2A;
+      color: #FFFFFF;
+      border-bottom: 2px solid #2A82DA;
+    }
+
+    .view-container {
+      display: none;
+    }
+    .view-container.active {
+      display: block;
+    }
+
+    /* 手机版整体稍微窄一点、按钮更高一点（参考你安卓 Compose 的 16dp padding + 56dp 高度） */
+    .mobile-layout textarea {
+      min-height: 140px;
+    }
+    .mobile-layout .row-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .mobile-layout .row-buttons button {
+      flex: 1 1 48%;
+      height: 48px;
+    }
+    .mobile-layout .row-top {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .mobile-layout input[type="password"] {
+      width: 100%;
+    }
+
+    @media (max-width: 768px) {
+      .panel {
+        padding: 12px;
+      }
+    }
   </style>
 </head>
 <body>
 <div class="panel">
-  <h1>秘钥字典：文字 &lt;-&gt; 编号（网页版）</h1>
+  <h1>秘钥字典：文字 &lt;-&gt; 编号</h1>
 
-  <!-- 秘钥区 -->
-  <div class="row">
-    <label for="keyInput">秘钥：</label>
-    <input id="keyInput" type="password" class="grow"
-           placeholder="同秘钥跨设备编号一致；不同秘钥完全不同" />
-    <button id="loadBtn">加载字典</button>
+  <!-- 顶部 Tab 切换 -->
+  <div class="tabs">
+    <button class="tab-btn active" data-target="desktopView">电脑版</button>
+    <button class="tab-btn" data-target="mobileView">手机版</button>
   </div>
 
-  <div id="info" class="info">字典未加载，请先输入秘钥并点击【加载字典】</div>
+  <!-- 电脑版视图 -->
+  <div id="desktopView" class="view-container active">
+    <!-- 秘钥区 -->
+    <div class="row">
+      <label for="keyInputDesktop">秘钥：</label>
+      <input id="keyInputDesktop" type="password" class="grow"
+             placeholder="同秘钥跨设备编号一致；不同秘钥完全不同" />
+      <button id="loadBtnDesktop">加载字典</button>
+    </div>
+    <div id="infoDesktop" class="info">
+      字典未加载，请先输入秘钥并点击【加载字典】
+    </div>
 
-  <!-- 分隔符区 -->
-  <div class="row">
-    <label for="sepInput">编号分隔符（默认空格）：</label>
-    <input id="sepInput" type="text" value=" " style="width: 80px;" />
+    <!-- 分隔符区 -->
+    <div class="row">
+      <label for="sepInputDesktop">编号分隔符（默认空格）：</label>
+      <input id="sepInputDesktop" type="text" value=" " style="width: 80px;" />
+    </div>
+
+    <!-- 输入输出 -->
+    <div class="section-title">输入（任意文字或编号序列）：</div>
+    <textarea id="inputDesktop" placeholder="先加载字典，然后输入任意文本（含空格/标点）或编号序列"></textarea>
+
+    <div class="section-title">输出：</div>
+    <textarea id="outputDesktop" readonly></textarea>
+
+    <!-- 按钮区 -->
+    <div class="row" style="margin-top: 8px;">
+      <button id="btnText2IdDesktop" disabled>文字 → 编号</button>
+      <button id="btnId2TextDesktop" disabled>编号 → 文字</button>
+      <span class="grow"></span>
+      <button id="btnCopyDesktop" disabled>复制输出</button>
+      <button id="btnClearDesktop" disabled>清空</button>
+    </div>
   </div>
 
-  <!-- 输入输出 -->
-  <div class="section-title">输入（任意文字或编号序列）：</div>
-  <textarea id="inputArea" placeholder="先加载字典，然后输入任意文本（含空格/标点）或编号序列"></textarea>
+  <!-- 手机版视图（布局参考 Android Compose：上中下纵向，大按钮） -->
+  <div id="mobileView" class="view-container mobile-layout">
+    <!-- 顶部说明 + 秘钥 -->
+    <div class="row row-top">
+      <div style="margin-bottom:6px;">
+        <div style="font-weight:bold;">秘钥字典（手机版）</div>
+        <div style="font-size:12px;color:#BBBBBB;">同一秘钥下，编号跨设备一致；不同秘钥完全不同。</div>
+      </div>
+      <input id="keyInputMobile" type="password"
+             placeholder="输入秘钥..." />
+      <div style="margin-top:6px;display:flex;gap:8px;">
+        <button id="loadBtnMobile" style="flex:1;">加载字典</button>
+      </div>
+    </div>
+    <div id="infoMobile" class="info">
+      字典未加载，请先输入秘钥并点击【加载字典】
+    </div>
 
-  <div class="section-title">输出：</div>
-  <textarea id="outputArea" readonly></textarea>
+    <!-- 分隔符 -->
+    <div class="row">
+      <label for="sepInputMobile">编号分隔符：</label>
+      <input id="sepInputMobile" type="text" value=" " style="width: 80px;" />
+      <span style="font-size:12px;color:#888888;">空则默认为空格</span>
+    </div>
 
-  <!-- 按钮区 -->
-  <div class="row" style="margin-top: 8px;">
-    <button id="btnText2Id" disabled>文字 → 编号</button>
-    <button id="btnId2Text" disabled>编号 → 文字</button>
-    <span class="grow"></span>
-    <button id="btnCopy" disabled>复制输出</button>
-    <button id="btnClear" disabled>清空</button>
+    <!-- 输入 -->
+    <div class="section-title">输入</div>
+    <textarea id="inputMobile"
+              placeholder="输入任意文字（含空格/标点）或编号序列"></textarea>
+
+    <!-- 输出 -->
+    <div class="section-title">输出</div>
+    <textarea id="outputMobile" readonly></textarea>
+
+    <!-- 按钮（大按钮、两列） -->
+    <div class="row-buttons">
+      <button id="btnText2IdMobile" disabled>文字 → 编号</button>
+      <button id="btnId2TextMobile" disabled>编号 → 文字</button>
+      <button id="btnCopyMobile" disabled>复制输出</button>
+      <button id="btnClearMobile" disabled>清空</button>
+    </div>
   </div>
 </div>
 
 <script>
+  /* =============== 顶部 Tab 切换 =============== */
+  (function initTabs() {
+    const tabButtons = document.querySelectorAll(".tab-btn");
+    const views = document.querySelectorAll(".view-container");
+
+    tabButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const target = btn.getAttribute("data-target");
+        tabButtons.forEach(b => b.classList.remove("active"));
+        views.forEach(v => v.classList.remove("active"));
+
+        btn.classList.add("active");
+        document.getElementById(target).classList.add("active");
+      });
+    });
+  })();
+
   // =============== 1) 固定“字符全集” ===============
   function fixedCharset() {
     const chars = [];
@@ -163,7 +290,7 @@
       chars.push(String.fromCharCode(i));
     }
 
-    // CJK 扩展A U+3400..U+4DBF (到 0x4DC0 之前)
+    // CJK 扩展A U+3400..0x4DBF (到 0x4DC0 之前)
     for (let i = 0x3400; i < 0x4DC0; i++) {
       chars.push(String.fromCharCode(i));
     }
@@ -185,7 +312,7 @@
     return out;
   }
 
-  const CHARSET_FIXED = fixedCharset(); // 长度应为 28245 左右
+  const CHARSET_FIXED = fixedCharset();
   const MASK64 = (1n << 64n) - 1n;
 
   // =============== 2) SplitMix64 ===============
@@ -241,155 +368,191 @@
       const tmp = shuffled[i];
       shuffled[i] = shuffled[j];
       shuffled[j] = tmp;
-      }
+    }
     return shuffled;
   }
 
-  // =============== 3) 网页交互逻辑 ===============
-  const keyInput    = document.getElementById("keyInput");
-  const loadBtn     = document.getElementById("loadBtn");
-  const info        = document.getElementById("info");
-  const sepInput    = document.getElementById("sepInput");
-  const inputArea   = document.getElementById("inputArea");
-  const outputArea  = document.getElementById("outputArea");
-  const btnText2Id  = document.getElementById("btnText2Id");
-  const btnId2Text  = document.getElementById("btnId2Text");
-  const btnCopy     = document.getElementById("btnCopy");
-  const btnClear    = document.getElementById("btnClear");
-
+  // =============== 3) 共用的逻辑状态（两套界面共享） ===============
   let shuffled = null;
   let id2char = null;
   let char2id = null;
 
-  function setButtonsEnabled(enabled) {
-    btnText2Id.disabled = !enabled;
-    btnId2Text.disabled = !enabled;
-    btnCopy.disabled = !enabled;
-    btnClear.disabled = !enabled;
+  function enableView(prefix, enabled) {
+    const ids = [
+      "btnText2Id", "btnId2Text",
+      "btnCopy", "btnClear"
+    ];
+    ids.forEach(id => {
+      const el = document.getElementById(id + prefix);
+      if (el) el.disabled = !enabled;
+    });
   }
 
-  setButtonsEnabled(false);
-
-  function getSep() {
-    const v = sepInput.value;
+  function getSep(prefix) {
+    const el = document.getElementById("sepInput" + prefix);
+    if (!el) return " ";
+    const v = el.value;
     return v === "" ? " " : v;
   }
 
-  loadBtn.addEventListener("click", async () => {
-    const key = keyInput.value;
-    if (!key.trim()) {
-      info.textContent = "[错误] 秘钥不能为空";
-      return;
-    }
-    loadBtn.disabled = true;
-    info.textContent = "正在根据秘钥生成字典，请稍候……";
+  function updateInfoAll(text) {
+    const desk = document.getElementById("infoDesktop");
+    const mob = document.getElementById("infoMobile");
+    if (desk) desk.textContent = text;
+    if (mob) mob.textContent = text;
+  }
 
-    try {
-      shuffled = await charsetFromKey(key);
-      id2char = shuffled;
-      char2id = new Map();
-      for (let i = 0; i < shuffled.length; i++) {
-        char2id.set(shuffled[i], i + 1);
-      }
+  function setDictLoadedUI() {
+    const size = shuffled ? shuffled.length : 0;
+    const msg =
+      "字典已加载 ✅  | 字符全集大小：" + size +
+      "\n同秘钥跨设备编号完全一致；不同秘钥编号体系完全不同。";
+    updateInfoAll(msg);
+    enableView("Desktop", true);
+    enableView("Mobile", true);
+  }
 
-      info.textContent =
-        "字典已加载 ✅  | 字符全集大小：" + shuffled.length +
-        "\n同秘钥跨设备编号完全一致；不同秘钥编号体系完全不同。";
+  function setErrorUI(msg) {
+    updateInfoAll("[错误] " + msg);
+    enableView("Desktop", false);
+    enableView("Mobile", false);
+  }
 
-      setButtonsEnabled(true);
-    } catch (e) {
-      console.error(e);
-      info.textContent = "[错误] " + (e && e.message ? e.message : String(e));
-      setButtonsEnabled(false);
-    } finally {
-      loadBtn.disabled = false;
-    }
-  });
+  // =============== 4) 为某个前缀视图注册事件 ===============
+  function initView(prefix) {
+    const keyInput   = document.getElementById("keyInput" + prefix);
+    const loadBtn    = document.getElementById("loadBtn" + prefix);
+    const inputArea  = document.getElementById("input" + prefix);
+    const outputArea = document.getElementById("output" + prefix);
+    const btnT2I     = document.getElementById("btnText2Id" + prefix);
+    const btnI2T     = document.getElementById("btnId2Text" + prefix);
+    const btnCopy    = document.getElementById("btnCopy" + prefix);
+    const btnClear   = document.getElementById("btnClear" + prefix);
 
-  // 文字 -> 编号
-  btnText2Id.addEventListener("click", () => {
-    if (!char2id) {
-      outputArea.value = "请先输入秘钥并加载字典。";
-      return;
-    }
-    const text = inputArea.value;
-    const sep = getSep();
-    const ids = [];
-    const missing = [];
+    // 初始禁用按钮
+    enableView(prefix, false);
 
-    for (const ch of text) {
-      if (char2id.has(ch)) {
-        ids.push(String(char2id.get(ch)));
-      } else {
-        missing.push(ch);
-      }
-    }
+    if (loadBtn) {
+      loadBtn.addEventListener("click", async () => {
+        const key = keyInput ? keyInput.value : "";
+        if (!key.trim()) {
+          setErrorUI("秘钥不能为空");
+          return;
+        }
+        loadBtn.disabled = true;
+        updateInfoAll("正在根据秘钥生成字典，请稍候……");
 
-    let out = ids.join(sep);
-    if (missing.length > 0) {
-      out += "\n\n[提示] 下列字符不在固定全集中，无法编码：\n" + missing.join("");
-    }
-    outputArea.value = out;
-  });
-
-  // 编号 -> 文字（这是原始的「只能出第一个字」版本）
-  btnId2Text.addEventListener("click", () => {
-    if (!id2char) {
-      outputArea.value = "请先输入秘钥并加载字典。";
-      return;
-    }
-    const raw = inputArea.value.trim();
-    if (!raw) {
-      outputArea.value = "";
-      return;
+        try {
+          shuffled = await charsetFromKey(key);
+          id2char = shuffled;
+          char2id = new Map();
+          for (let i = 0; i < shuffled.length; i++) {
+            char2id.set(shuffled[i], i + 1);
+          }
+          setDictLoadedUI();
+        } catch (e) {
+          console.error(e);
+          setErrorUI(e && e.message ? e.message : String(e));
+        } finally {
+          loadBtn.disabled = false;
+        }
+      });
     }
 
-    // ★ 这是最初的版本（有 bug）：\\s 写成了反斜杠+s
-    const parts = raw.split(/[,\s;、，；]+/);
+    // 文字 -> 编号
+    if (btnT2I) {
+      btnT2I.addEventListener("click", () => {
+        if (!char2id) {
+          outputArea.value = "请先输入秘钥并加载字典。";
+          return;
+        }
+        const text = inputArea.value;
+        const sep = getSep(prefix);
+        const ids = [];
+        const missing = [];
 
+        for (const ch of text) {
+          if (char2id.has(ch)) {
+            ids.push(String(char2id.get(ch)));
+          } else {
+            missing.push(ch);
+          }
+        }
 
-    const n = id2char.length;
-    const outChars = [];
-    const bad = [];
-
-    for (const p of parts) {
-      if (!p) continue;
-      const num = Number.parseInt(p, 10);
-      if (!Number.isFinite(num)) {
-        bad.push(p);
-        continue;
-      }
-      if (num >= 1 && num <= n) {
-        outChars.push(id2char[num - 1]);
-      } else {
-        bad.push(p);
-      }
+        let out = ids.join(sep);
+        if (missing.length > 0) {
+          out += "\n\n[提示] 下列字符不在固定全集中，无法编码：\n" + missing.join("");
+        }
+        outputArea.value = out;
+      });
     }
 
-    let text = outChars.join("");
-    if (bad.length > 0) {
-      text += "\n\n[提示] 无效/超范围编号已忽略：\n" + JSON.stringify(bad, null, 2);
-    }
-    outputArea.value = text;
-  });
+    // 编号 -> 文字（这里已经修正为 \s，不会只还原第一个字）
+    if (btnI2T) {
+      btnI2T.addEventListener("click", () => {
+        if (!id2char) {
+          outputArea.value = "请先输入秘钥并加载字典。";
+          return;
+        }
+        const raw = inputArea.value.trim();
+        if (!raw) {
+          outputArea.value = "";
+          return;
+        }
+        // 支持：空格、英文逗号/分号、中文逗号/分号、顿号
+        const parts = raw。split(/[,\s;、，；]+/);
 
-  // 复制输出
-  btnCopy.addEventListener("click", async () => {
-    try {
-      await navigator.clipboard.writeText(outputArea.value || "");
-      alert("输出内容已复制到剪贴板。");
-    } catch (e) {
-      console.error(e);
-      alert("复制失败，请手动 Ctrl+C。");
-    }
-  });
+        const n = id2char.length;
+        const outChars = [];
+        const bad = [];
 
-  // 清空
-  btnClear.addEventListener("click", () => {
-    inputArea.value = "";
-    outputArea.value = "";
-  });
+        for (const p of parts) {
+          if (!p) continue;
+          const num = Number。parseInt(p， 10);
+          if (!Number。isFinite(num)) {
+            bad.push(p);
+            continue;
+          }
+          if (num >= 1 && num <= n) {
+            outChars.push(id2char[num - 1]);
+          } else {
+            bad。push(p);
+          }
+        }
+
+        let text = outChars.join("");
+        if (bad。length > 0) {
+          text += "\n\n[提示] 无效/超范围编号已忽略：\n" + JSON.stringify(bad, null, 2);
+        }
+        outputArea.value = text;
+      });
+    }
+
+    // 复制输出
+    if (btnCopy) {
+      btnCopy。addEventListener("click"， async () => {
+        try {
+          await navigator.clipboard。writeText(outputArea。value || "");
+          alert("输出内容已复制到剪贴板。");
+        } catch (e) {
+          console.error(e);
+          alert("复制失败，请手动 Ctrl+C。");
+        }
+      });
+    }
+
+    // 清空
+    if (btnClear) {
+      btnClear.addEventListener("click", () => {
+        inputArea.value = "";
+        outputArea.value = "";
+      });
+    }
+  }
+
+  // 初始化两套界面
+  initView("Desktop");
+  initView("Mobile");
 </script>
-
 </body>
 </html>
