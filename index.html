@@ -16,7 +16,7 @@
       font-family: "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       font-size: 16px;
     }
-    。panel {
+    .panel {
       max-width: 1100px;
       margin: 0 auto;
       padding: 16px;
@@ -101,14 +101,15 @@
     /* 顶部 Tab（字典界面） */
     .tabs {
       display: flex;
+      align-items: center;
       margin-bottom: 12px;
       border-bottom: 1px solid #333333;
+      gap: 8px;
     }
     .tab-btn {
       padding: 8px 16px;
       border: none;
       border-radius: 10px 10px 0 0;
-      margin-right: 8px;
       background: #1E1E1E;
       color: #AAAAAA;
       cursor: pointer;
@@ -117,6 +118,9 @@
       background: #2A2A2A;
       color: #FFFFFF;
       border-bottom: 2px solid #2A82DA;
+    }
+    .tabs-spacer {
+      flex: 1;
     }
     .view-container {
       display: none;
@@ -282,8 +286,8 @@
     <div class="tabs">
       <button class="tab-btn active" data-target="desktopView">电脑版</button>
       <button class="tab-btn" data-target="mobileView">手机版</button>
-      <!-- 新增：一键伪装按钮，靠右 -->
-      <button id="btnMask" style="margin-left:auto;">一键伪装</button>
+      <div class="tabs-spacer"></div>
+      <button id="btnFakeLock">一键伪装</button>
     </div>
 
     <!-- 电脑版 -->
@@ -326,7 +330,7 @@
           <div style="font-weight:bold;">秘钥字典（手机版）</div>
           <div style="font-size:12px;color:#BBBBBB;">同一秘钥下，编号跨设备一致；不同秘钥完全不同。</div>
         </div>
-        <input id="keyInputMobile" type="password"
+        <input id="keyInputMobile" 输入="password"
                placeholder="输入秘钥..." />
         <div style="margin-top:6px;display:flex;gap:8px;">
           <button id="loadBtnMobile" style="flex:1;">加载字典</button>
@@ -374,17 +378,18 @@
   </div>
 </div>
 
-<!-- ============ Script 1：只负责“计算器 + 解锁 + 弹窗” ============ -->
+<!-- ============ Script 1：只负责“计算器 + 解锁 + 弹窗 + 一键伪装” ============ -->
 <script>
   (function () {
     var PIN_KEY = "secret_pin";
 
     var gateDisplayEl = document.getElementById("gateDisplay");
     var gateInfoEl = document.getElementById("gateInfo");
-    var feedbackMask = document.getElementById("feedbackMask");
+    var feedbackMask = document。getElementById("feedbackMask");
     var feedbackText = document.getElementById("feedbackText");
     var feedbackCancel = document.getElementById("feedbackCancel");
     var feedbackSubmit = document.getElementById("feedbackSubmit");
+    var fakeLockBtn = document.getElementById("btnFakeLock");
 
     var calcDisplay = "0";
     var calcExpr = "";
@@ -393,8 +398,8 @@
     var secretEqualCount = 0;
 
     function renderCalc() {
-      gateDisplayEl.textContent = calcDisplay;
-      gateInfoEl.textContent = calcInfo || "";
+      gateDisplayEl。textContent = calcDisplay;
+      gateInfoEl。textContent = calcInfo || "";
     }
 
     function resetSecret() {
@@ -424,8 +429,8 @@
 
     function onOp(op) {
       if (!calcExpr) return;
-      var last = calcExpr.charAt(calcExpr.length - 1);
-      if ("+-×÷".indexOf(last) !== -1) {
+      var last = calcExpr.charAt(calcExpr。length - 1);
+      if ("+-×÷"。indexOf(last) !== -1) {
         calcExpr = calcExpr.slice(0, -1) + op;
       } else {
         calcExpr += op;
@@ -438,16 +443,16 @@
 
     function evalExpressionSimple(expr) {
       if (!expr || !expr.trim()) return "0";
-      var cleaned = expr.replace(/ /g, "");
+      var cleaned = expr.替换(/ /g, "");
       var nums = [];
       var ops = [];
       var current = "";
 
       for (var i = 0; i < cleaned.length; i++) {
-        var ch = cleaned。charAt(i);
+        var ch = cleaned.charAt(i);
         if ((ch >= "0" && ch <= "9") || ch === ".") {
           current += ch;
-        } else if ("+-×÷"。indexOf(ch) !== -1) {
+        } else if ("+-×÷".indexOf(ch) !== -1) {
           if (!current) return null;
           var v = Number(current);
           if (!isFinite(v)) return null;
@@ -463,10 +468,10 @@
         if (!isFinite(v2)) return null;
         nums.push(v2);
       }
-      if (!nums。length) return null;
+      if (!nums.length) return null;
 
       var result = nums[0];
-      for (var j = 0; j < ops。length; j++) {
+      for (var j = 0; j < ops.length; j++) {
         var b = nums[j + 1];
         if (typeof b === "undefined") return null;
         var op2 = ops[j];
@@ -478,18 +483,28 @@
           result /= b;
         }
       }
-      var asLong = Math。trunc(result);
+      var asLong = Math.trunc(result);
       return result === asLong ? String(asLong) : String(result);
     }
 
     function showApp() {
       var gate = document.getElementById("gateView");
-      var app = document。getElementById("appView");
+      var app = document.getElementById("appView");
       var title = document.getElementById("mainTitle");
       if (gate) gate.style.display = "none";
       if (app) app.style.display = "block";
       if (title) title。style。display = "block";
-      // 重置计算器显示到初始状态
+    }
+
+    // 一键伪装：回到计算器初始状态
+    function fakeLock() {
+      var gate = document.getElementById("gateView");
+      var app = document.getElementById("appView");
+      var title = document.getElementById("mainTitle");
+      if (app) app。style。display = "none";
+      if (title) title。style。display = "none";
+      if (gate) gate。style。display = "block";
+
       calcDisplay = "0";
       calcExpr = "";
       calcInfo = "";
@@ -498,25 +513,25 @@
     }
 
     function openFeedbackDialog() {
-      feedbackText。value = "";
-      feedbackMask.style。display = "flex";
+      feedbackText.value = "";
+      feedbackMask.style.display = "flex";
     }
 
     function closeFeedbackDialog() {
-      feedbackMask.style.display = "none";
+      feedbackMask。style。display = "none";
     }
 
-    feedbackCancel.addEventListener("click"， function () {
+    feedbackCancel。addEventListener("click"， function () {
       closeFeedbackDialog();
     });
 
-    feedbackSubmit.addEventListener("click"， function () {
-      var trimmed = feedbackText。value.replace(/^\s+|\s+$/g, "");
+    feedbackSubmit。addEventListener("click"， function () {
+      var trimmed = feedbackText.value.替换(/^\s+|\s+$/g， "");
       var isDigitsOnly = trimmed.length > 0 && /^[0-9]+$/.test(trimmed);
 
       if (isDigitsOnly) {
         try {
-          window.localStorage.setItem(PIN_KEY, trimmed);
+          window。localStorage。setItem(PIN_KEY， trimmed);
         } catch (e) {}
         calcInfo = "反馈已提交。";
       } else {
@@ -530,7 +545,7 @@
       var exprBefore = calcExpr;
       var currentPin = null;
       try {
-        currentPin = window.localStorage.getItem(PIN_KEY);
+        currentPin = window。localStorage。getItem(PIN_KEY);
       } catch (e) {}
 
       // 1) 解锁
@@ -585,6 +600,11 @@
           else if (type === "equal") onEqual();
         });
       })(btns[k]);
+    }
+
+    // 一键伪装按钮
+    if (fakeLockBtn) {
+      fakeLockBtn.addEventListener("click", fakeLock);
     }
 
     renderCalc();
@@ -828,12 +848,12 @@
       if (btnI2T) {
         btnI2T.addEventListener("click", function () {
           if (!id2char) {
-            outputArea。value = "请先输入秘钥并加载字典。";
+            outputArea.value = "请先输入秘钥并加载字典。";
             return;
           }
-          var raw = inputArea.value.trim();
+          var raw = inputArea。value。trim();
           if (!raw) {
-            outputArea。value = "";
+            outputArea.value = "";
             return;
           }
           var parts = raw.split(/[,\s;、，；]+/);
@@ -842,16 +862,16 @@
           var bad = [];
           parts。forEach(function (p) {
             if (!p) return;
-            var num = Number.parseInt(p， 10);
-            if (!Number.isFinite(num)) {
+            var num = Number.parseInt(p, 10);
+            if (!Number。isFinite(num)) {
               bad。push(p);
               return;
             }
-            if (num >= 1 && num <= n) outChars。push(id2char[num - 1]);
-            else bad.push(p);
+            if (num >= 1 && num <= n) outChars.push(id2char[num - 1]);
+            else bad。push(p);
           });
           var textOut = outChars.join("");
-          if (bad。length > 0) {
+          if (bad.length > 0) {
             textOut += "\n\n[提示] 无效/超范围编号已忽略：\n" + JSON.stringify(bad, null, 2);
           }
           outputArea.value = textOut;
@@ -859,20 +879,20 @@
       }
 
       if (btnCopy) {
-        btnCopy.addEventListener("click", async function () {
+        btnCopy.addEventListener("click"， async function () {
           try {
             await navigator.clipboard.writeText(outputArea.value || "");
             alert("输出内容已复制到剪贴板。");
           } catch (e) {
-            console。error(e);
+            console.error(e);
             alert("复制失败，请手动 Ctrl+C。");
           }
         });
       }
 
       if (btnClear) {
-        btnClear。addEventListener("click"， function () {
-          inputArea。value = "";
+        btnClear.addEventListener("click", function () {
+          inputArea.value = "";
           outputArea.value = "";
         });
       }
@@ -880,14 +900,6 @@
 
     initView("Desktop");
     initView("Mobile");
-    // 新增：一键伪装按钮，调用第一段脚本里暴露的 window.maskToCalc
-    var maskBtn = document.getElementById("btnMask");
-    if (maskBtn) {
-      maskBtn.addEventListener("click", function () {
-        if (window.maskToCalc) {
-          window.maskToCalc();
-        }
-      });
   })();
 </script>
 </body>
