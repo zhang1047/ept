@@ -155,7 +155,7 @@
       font-size: 18px;
       margin-bottom: 4px;
     }
-    .calc-header-sub {
+    。calc-header-sub {
       font-size: 13px;
       color: #BBBBBB;
     }
@@ -186,13 +186,17 @@
     /* 意见反馈弹窗 */
     。dialog-mask {
       position: fixed;
-      inset: 0;
-      background: rgba(0, 0， 0, 0.5);
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0， 0, 0, 0.7);
       display: none;
       align-items: center;
       justify-content: center;
-      z-index: 999;
+      z-index: 9999;
     }
+
     。dialog {
       background: #1E1E1E;
       border-radius: 12px;
@@ -231,17 +235,11 @@
     }
 
     @media (max-width: 768px) {
-      .panel {
+      。panel {
         padding: 12px;
       }
     }
-    /* 修复意见反馈弹窗在计算器页被压住的问题 */
-    #feedbackMask {
-      position: fixed !important;
-      z-index: 9999 !important;
-      top: 0;
-      left: 0;
-    }
+
   </style>
 </head>
 <body>
@@ -390,7 +388,7 @@
     var gateInfoEl = document。getElementById("gateInfo");
     var feedbackMask = document。getElementById("feedbackMask");
     var feedbackText = document。getElementById("feedbackText");
-    var feedbackCancel = document.getElementById("feedbackCancel");
+    var feedbackCancel = document。getElementById("feedbackCancel");
     var feedbackSubmit = document。getElementById("feedbackSubmit");
 
     var calcDisplay = "0";
