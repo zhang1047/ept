@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>秘钥字典：文字 &lt;-&gt; 编号（网页版）</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 16px;
+      background: #121212;
+      color: #E6E6E6;
+      font-family: "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 14px;
+    }
+    h1 {
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+    .panel {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    label {
+      display: inline-block;
+      margin-right: 8px;
+    }
+    input[type="text"],
+    input[type="password"] {
+      background: #1E1E1E;
+      color: #FFFFFF;
+      border: 1px solid #333333;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 14px;
+    }
+    input[type="text"]:focus,
+    input[type="password"]:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #2A82DA;
+    }
+    textarea {
+      width: 100%;
+      min-height: 160px;
+      resize: vertical;
+      background: #1E1E1E;
+      color: #FFFFFF;
+      border: 1px solid #333333;
+      border-radius: 8px;
+      padding: 8px;
+      box-sizing: border-box;
+      font-size: 14px;
+      line-height: 1.5;
+      font-family: Consolas, "Microsoft YaHei", monospace;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+    .row .grow {
+      flex: 1;
+      min-width: 150px;
+    }
+    .info {
+      margin: 6px 0 12px;
+      color: #CFCFCF;
+      white-space: pre-line;
+    }
+    button {
+      background: #2A2A2A;
+      color: #E6E6E6;
+      border: 1px solid #3A3A3A;
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #3A3A3A;
+    }
+    button:active {
+      background: #444444;
+    }
+    button:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+    .btn-right {
+      margin-left: auto;
+    }
+    .section-title {
+      margin: 10px 0 4px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+<div class="panel">
+  <h1>秘钥字典：文字 &lt;-&gt; 编号（网页版）</h1>
+
+  <!-- 秘钥区 -->
+  <div class="row">
+    <label for="keyInput">秘钥：</label>
+    <input id="keyInput" type="password" class="grow"
+           placeholder="同秘钥跨设备编号一致；不同秘钥完全不同" />
+    <button id="loadBtn">加载字典</button>
+  </div>
+
+  <div id="info" class="info">字典未加载，请先输入秘钥并点击【加载字典】</div>
+
+  <!-- 分隔符区 -->
+  <div class="row">
+    <label for="sepInput">编号分隔符（默认空格）：</label>
+    <input id="sepInput" type="text" value=" " style="width: 80px;" />
+  </div>
+
+  <!-- 输入输出 -->
+  <div class="section-title">输入（任意文字或编号序列）：</div>
+  <textarea id="inputArea" placeholder="先加载字典，然后输入任意文本（含空格/标点）或编号序列"></textarea>
+
+  <div class="section-title">输出：</div>
+  <textarea id="outputArea" readonly></textarea>
+
+  <!-- 按钮区 -->
+  <div class="row" style="margin-top: 8px;">
+    <button id="btnText2Id" disabled>文字 → 编号</button>
+    <button id="btnId2Text" disabled>编号 → 文字</button>
+    <span class="grow"></span>
+    <button id="btnCopy" disabled>复制输出</button>
+    <button id="btnClear" disabled>清空</button>
+  </div>
+</div>
+
+<script>
+  // =============== 1) 固定“字符全集” ===============
+  function fixedCharset() {
+    const chars = [];
+
+    // 空白/控制
+    chars.push("\n");
+    chars.push("\r");
+    chars.push("\t");
+
+    // ASCII 可见 0x20..0x7E
+    for (let i = 0x20; i < 0x7F; i++) {
+      chars.push(String.fromCharCode(i));
+    }
+
+    // 全角 ASCII 0xFF01..0xFF5E
+    for (let i = 0xFF01; i < 0xFF5F; i++) {
+      chars.push(String.fromCharCode(i));
+    }
+    chars.push("\u3000"); // 全角空格
+
+    // 常见中文标点（顺序须与安卓一致）
+    const punct = "，。、！？；：‘’“”【】（）《》〈〉——…·「」『』￥％＃＠＆＋－＝／＼｜～｀";
+    for (const c of punct) {
+      chars.push(c);
+    }
+
+    // CJK 统一汉字 U+4E00..U+9FFF (到 0xA000 之前)
+    for (let i = 0x4E00; i < 0xA000; i++) {
+      chars.push(String.fromCharCode(i));
+    }
+
+    // CJK 扩展A U+3400..U+4DBF (到 0x4DC0 之前)
+    for (let i = 0x3400; i < 0x4DC0; i++) {
+      chars.push(String.fromCharCode(i));
+    }
+
+    // 常见符号区 U+2600..U+27BF (到 0x27C0 之前)
+    for (let i = 0x2600; i < 0x27C0; i++) {
+      chars.push(String.fromCharCode(i));
+    }
+
+    // 保序去重
+    const seen = new Set();
+    const out = [];
+    for (const c of chars) {
+      if (!seen.has(c)) {
+        seen.add(c);
+        out.push(c);
+      }
+    }
+    return out;
+  }
+
+  const CHARSET_FIXED = fixedCharset(); // 长度应为 28245 左右
+  const MASK64 = (1n << 64n) - 1n;
+
+  // =============== 2) SplitMix64 ===============
+  class SplitMix64 {
+    constructor(seed) {
+      this.state = seed & MASK64;
+    }
+    nextU64() {
+      this.state = (this.state + 0x9e3779b97f4a7c15n) & MASK64;
+      let z = this.state;
+      z = (z ^ (z >> 30n)) * 0xbf58476d1ce4e5b9n & MASK64;
+      z = (z ^ (z >> 27n)) * 0x94d049bb133111ebn & MASK64;
+      z = z ^ (z >> 31n);
+      return z & MASK64;
+    }
+    nextBounded(bound) {
+      const x = this.nextU64();
+      return Number(x % BigInt(bound));
+    }
+  }
+
+  // 计算 SHA256(key)，取前 8 字节为种子（大端无符号）
+  async function sha256ToSeedU64(key) {
+    const enc = new TextEncoder();
+    const data = enc.encode(key.trim());
+    const hashBuf = await crypto.subtle.digest("SHA-256", data);
+    const hash = new Uint8Array(hashBuf);
+
+    let seed = 0n;
+    for (let i = 0; i < 8; i++) {
+      seed = (seed << 8n) | BigInt(hash[i]);
+    }
+    return seed & MASK64;
+  }
+
+  async function charsetFromKey(key) {
+    key = key.trim();
+    if (!key) {
+      throw new Error("秘钥不能为空");
+    }
+    const seed = await sha256ToSeedU64(key);
+    const rng = new SplitMix64(seed);
+    const shuffled = CHARSET_FIXED.slice();
+
+    // Fisher-Yates 洗牌
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = rng.nextBounded(i + 1);
+      const tmp = shuffled[i];
+      shuffled[i] = shuffled[j];
+      shuffled[j] = tmp;
+    }
+    return shuffled;
+  }
+
+  // =============== 3) 网页交互逻辑 ===============
+  const keyInput    = document.getElementById("keyInput");
+  const loadBtn     = document.getElementById("loadBtn");
+  const info        = document.getElementById("info");
+  const sepInput    = document.getElementById("sepInput");
+  const inputArea   = document.getElementById("inputArea");
+  const outputArea  = document.getElementById("outputArea");
+  const btnText2Id  = document.getElementById("btnText2Id");
+  const btnId2Text  = document.getElementById("btnId2Text");
+  const btnCopy     = document.getElementById("btnCopy");
+  const btnClear    = document.getElementById("btnClear");
+
+  let shuffled = null;
+  let id2char = null;
+  let char2id = null;
+
+  function setButtonsEnabled(enabled) {
+    btnText2Id.disabled = !enabled;
+    btnId2Text.disabled = !enabled;
+    btnCopy.disabled = !enabled;
+    btnClear.disabled = !enabled;
+  }
+
+  setButtonsEnabled(false);
+
+  function getSep() {
+    const v = sepInput.value;
+    return v === "" ? " " : v;
+  }
+
+  loadBtn.addEventListener("click", async () => {
+    const key = keyInput.value;
+    if (!key.trim()) {
+      info.textContent = "[错误] 秘钥不能为空";
+      return;
+    }
+    loadBtn.disabled = true;
+    info.textContent = "正在根据秘钥生成字典，请稍候……";
+
+    try {
+      shuffled = await charsetFromKey(key);
+      id2char = shuffled;
+      char2id = new Map();
+      for (let i = 0; i < shuffled.length; i++) {
+        char2id.set(shuffled[i], i + 1);
+      }
+
+      info.textContent =
+        "字典已加载 ✅  | 字符全集大小：" + shuffled.length +
+        "\n同秘钥跨设备编号完全一致；不同秘钥编号体系完全不同。";
+
+      setButtonsEnabled(true);
+    } catch (e) {
+      console.error(e);
+      info.textContent = "[错误] " + (e && e.message ? e.message : String(e));
+      setButtonsEnabled(false);
+    } finally {
+      loadBtn.disabled = false;
+    }
+  });
+
+  // 文字 -> 编号
+  btnText2Id.addEventListener("click", () => {
+    if (!char2id) {
+      outputArea.value = "请先输入秘钥并加载字典。";
+      return;
+    }
+    const text = inputArea.value;
+    const sep = getSep();
+    const ids = [];
+    const missing = [];
+
+    for (const ch of text) {
+      if (char2id.has(ch)) {
+        ids.push(String(char2id.get(ch)));
+      } else {
+        missing.push(ch);
+      }
+    }
+
+    let out = ids.join(sep);
+    if (missing.length > 0) {
+      out += "\n\n[提示] 下列字符不在固定全集中，无法编码：\n" + missing.join("");
+    }
+    outputArea.value = out;
+  });
+
+  // 编号 -> 文字
+  btnId2Text.addEventListener("click", () => {
+    if (!id2char) {
+      outputArea.value = "请先输入秘钥并加载字典。";
+      return;
+    }
+    const raw = inputArea.value.trim();
+    if (!raw) {
+      outputArea.value = "";
+      return;
+    }
+    const parts = raw.split(/[,\\s;、，；]+/);
+    const n = id2char.length;
+    const outChars = [];
+    const bad = [];
+
+    for (const p of parts) {
+      if (!p) continue;
+      const num = Number.parseInt(p, 10);
+      if (!Number.isFinite(num)) {
+        bad.push(p);
+        continue;
+      }
+      if (num >= 1 && num <= n) {
+        outChars.push(id2char[num - 1]);
+      } else {
+        bad.push(p);
+      }
+    }
+
+    let text = outChars.join("");
+    if (bad.length > 0) {
+      text += "\n\n[提示] 无效/超范围编号已忽略：\n" + JSON.stringify(bad, null, 2);
+    }
+    outputArea.value = text;
+  });
+
+  // 复制输出
+  btnCopy.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(outputArea.value || "");
+      alert("输出内容已复制到剪贴板。");
+    } catch (e) {
+      console.error(e);
+      alert("复制失败，请手动 Ctrl+C。");
+    }
+  });
+
+  // 清空
+  btnClear.addEventListener("click", () => {
+    inputArea.value = "";
+    outputArea.value = "";
+  });
+</script>
+</body>
+</html>
