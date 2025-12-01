@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <title>秘钥字典：文字 &lt;-&gt; 编号（网页版）</title>
 
-  <!-- 让手机上按真实宽度渲染，避免整个缩成小一块 -->
+  <!-- 让手机按真实宽度渲染 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <style>
@@ -16,7 +16,7 @@
       font-family: "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       font-size: 16px;
     }
-    。panel {
+    .panel {
       max-width: 1100px;
       margin: 0 auto;
       padding: 16px;
@@ -223,7 +223,7 @@
       font-size: 14px;
       resize: vertical;
     }
-    。dialog-actions {
+    .dialog-actions {
       margin-top: 12px;
       display: flex;
       justify-content: flex-end;
@@ -239,6 +239,7 @@
 </head>
 <body>
 <div class="panel">
+  <!-- 标题默认隐藏，解锁后再显示 -->
   <h1 id="mainTitle" style="display:none;">秘钥字典：文字 &lt;-&gt; 编号</h1>
 
   <!-- ================== 计算器伪装界面（前置） ================== -->
@@ -298,7 +299,7 @@
 
       <div class="row">
         <label for="sepInputDesktop">编号分隔符（默认空格）：</label>
-        <input id="sepInputDesktop" type="text" value=" " style="width: 80px;" />
+        <input id="sepInputDesktop" 输入="text" value=" " style="width: 80px;" />
       </div>
 
       <div class="section-title">输入（任意文字或编号序列）：</div>
@@ -336,7 +337,7 @@
 
       <div class="row">
         <label for="sepInputMobile">编号分隔符：</label>
-        <input id="sepInputMobile" 输入="text" value=" " style="width: 80px;" />
+        <input id="sepInputMobile" type="text" value=" " style="width: 80px;" />
         <span style="font-size:12px;color:#888888;">空则默认为空格</span>
       </div>
 
@@ -362,7 +363,7 @@
   <div class="dialog">
     <div class="dialog-title">意见反馈</div>
     <div class="dialog-body">
-      <p>欢迎反馈使用体验或建议。</p>
+      <p>欢迎反馈使用体验或建议。。</p>
       <textarea id="feedbackText" placeholder="在此输入反馈内容，或只输入数字设置/修改密码"></textarea>
     </div>
     <div class="dialog-actions">
@@ -675,7 +676,7 @@
   let secretEqualCount = 0;
 
   function renderCalc() {
-    gateDisplayEl.textContent = calcDisplay;
+    gateDisplayEl。textContent = calcDisplay;
     gateInfoEl.textContent = calcInfo || "";
   }
 
@@ -706,8 +707,8 @@
 
   function onOp(op) {
     if (!calcExpr) return;
-    const last = calcExpr[calcExpr.length - 1];
-    if ("+-×÷".includes(last)) {
+    const last = calcExpr[calcExpr。length - 1];
+    if ("+-×÷"。includes(last)) {
       calcExpr = calcExpr.slice(0, -1) + op;
     } else {
       calcExpr += op;
@@ -724,10 +725,10 @@
     const nums = [];
     const ops = [];
     let current = "";
-    for (const ch of cleaned) {
+    for (const ch / cleaned) {
       if ((ch >= "0" && ch <= "9") || ch === ".") {
         current += ch;
-      } else if ("+-×÷".includes(ch)) {
+      } else if ("+-×÷"。includes(ch)) {
         if (!current) return null;
         const v = Number(current);
         if (!Number.isFinite(v)) return null;
@@ -777,18 +778,18 @@
   }
 
   function closeFeedbackDialog() {
-    feedbackMask.style。display = "none";
+    feedbackMask.style.display = "none";
   }
 
-  feedbackCancel.addEventListener("click"， () => {
+  feedbackCancel.addEventListener("click", () => {
     closeFeedbackDialog();
   });
 
   feedbackSubmit.addEventListener("click", () => {
-    const trimmed = feedbackText。value。trim();
-    const isDigitsOnly = trimmed。length > 0 && /^[0-9]+$/。test(trimmed);
+    const trimmed = feedbackText.value.trim();
+    const isDigitsOnly = trimmed.length > 0 && /^[0-9]+$/.test(trimmed);
     if (isDigitsOnly) {
-      localStorage.setItem(PIN_KEY， trimmed);
+      localStorage.setItem(PIN_KEY, trimmed);
       calcInfo = "反馈已提交。";
     } else {
       calcInfo = "反馈已提交。";
@@ -799,9 +800,9 @@
 
   function onEqual() {
     const exprBefore = calcExpr;
-    const currentPin = localStorage。getItem(PIN_KEY);
+    const currentPin = localStorage.getItem(PIN_KEY);
 
-    // 1) 尝试解锁：只有已经设置过 PIN 时才生效
+    // 1) 解锁
     if (currentPin && exprBefore === currentPin) {
       calcDisplay = "完成";
       calcInfo = "已解锁";
@@ -812,7 +813,7 @@
       return;
     }
 
-    // 2) 隐藏入口：1+1 然后 20 次 =
+    // 2) 隐藏入口：1+1 + 连续按 20 次 =
     if (!secretModeActive) {
       if (exprBefore === "1+1") {
         secretModeActive = true;
@@ -827,7 +828,7 @@
       resetSecret();
     }
 
-    // 3) 正常计算器功能
+    // 3) 普通计算
     const res = evalExpressionSimple(exprBefore);
     if (res !== null) {
       calcDisplay = res;
@@ -841,13 +842,13 @@
   }
 
   document.querySelectorAll(".calc-btn").forEach(btn => {
-    const type = btn.getAttribute("data-type");
+    const 输入 = btn.getAttribute("data-type");
     const val = btn.getAttribute("data-val") || "";
     btn.addEventListener("click", () => {
-      if (type === "digit") onDigit(val);
-      else if (type === "op") onOp(val);
-      else if (type === "clear") onClear();
-      else if (type === "equal") onEqual();
+      if (输入 === "digit") onDigit(val);
+      else if (输入 === "op") onOp(val);
+      else if (输入 === "clear") onClear();
+      else if (输入 === "equal") onEqual();
     });
   });
 
