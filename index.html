@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <title>秘钥字典：文字 &lt;-&gt; 编号（网页版）</title>
 
-  <!-- 让手机按真实宽度渲染 -->
+  <!-- 手机上按真实宽度渲染 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <style>
@@ -98,7 +98,7 @@
       font-weight: bold;
     }
 
-    /* ===== 顶部 Tab 样式（字典界面用） ===== */
+    /* 顶部 Tab（字典界面） */
     .tabs {
       display: flex;
       margin-bottom: 12px;
@@ -125,7 +125,7 @@
       display: block;
     }
 
-    /* ===== 手机版字典布局 ===== */
+    /* 手机版字典布局 */
     .mobile-layout textarea {
       min-height: 140px;
     }
@@ -147,7 +147,7 @@
       width: 100%;
     }
 
-    /* ===== 计算器布局 ===== */
+    /* 计算器布局 */
     #gateView {
       margin-top: 8px;
     }
@@ -183,7 +183,7 @@
       grid-column: 1 / span 4;
     }
 
-    /* ===== 意见反馈弹窗 ===== */
+    /* 意见反馈弹窗 */
     .dialog-mask {
       position: fixed;
       inset: 0;
@@ -231,7 +231,7 @@
     }
 
     @media (max-width: 768px) {
-      。panel {
+      .panel {
         padding: 12px;
       }
     }
@@ -242,7 +242,7 @@
   <!-- 标题默认隐藏，解锁后再显示 -->
   <h1 id="mainTitle" style="display:none;">秘钥字典：文字 &lt;-&gt; 编号</h1>
 
-  <!-- ================== 计算器伪装界面（前置） ================== -->
+  <!-- 计算器伪装界面（前置） -->
   <div id="gateView">
     <div class="calc-header">
       <div class="calc-header-title">计算器</div>
@@ -276,16 +276,15 @@
     </div>
   </div>
 
-  <!-- ================== 真正的字典界面（解锁后才显示） ================== -->
+  <!-- 真正的字典界面（解锁后显示） -->
   <div id="appView" style="display:none;">
 
-    <!-- 顶部 Tab：电脑版 / 手机版 -->
     <div class="tabs">
       <button class="tab-btn active" data-target="desktopView">电脑版</button>
       <button class="tab-btn" data-target="mobileView">手机版</button>
     </div>
 
-    <!-- 电脑版视图 -->
+    <!-- 电脑版 -->
     <div id="desktopView" class="view-container active">
       <div class="row">
         <label for="keyInputDesktop">秘钥：</label>
@@ -299,7 +298,7 @@
 
       <div class="row">
         <label for="sepInputDesktop">编号分隔符（默认空格）：</label>
-        <input id="sepInputDesktop" 输入="text" value=" " style="width: 80px;" />
+        <input id="sepInputDesktop" type="text" value=" " style="width: 80px;" />
       </div>
 
       <div class="section-title">输入（任意文字或编号序列）：</div>
@@ -318,7 +317,7 @@
       </div>
     </div>
 
-    <!-- 手机版视图 -->
+    <!-- 手机版 -->
     <div id="mobileView" class="view-container mobile-layout">
       <div class="row row-top">
         <div style="margin-bottom:6px;">
@@ -358,13 +357,13 @@
   </div>
 </div>
 
-<!-- 意见反馈 / 设置密码 弹窗 -->
+<!-- 弹窗 -->
 <div id="feedbackMask" class="dialog-mask">
   <div class="dialog">
     <div class="dialog-title">意见反馈</div>
     <div class="dialog-body">
-      <p>欢迎反馈使用体验或建议。。</p>
-      <textarea id="feedbackText" placeholder="在此输入反馈内容，或只输入数字设置/修改密码"></textarea>
+      <p>欢迎反馈使用体验或建议。</p>
+      <textarea id="feedbackText" placeholder="在此输入反馈内容"></textarea>
     </div>
     <div class="dialog-actions">
       <button id="feedbackCancel">取消</button>
@@ -373,486 +372,507 @@
   </div>
 </div>
 
+<!-- ============ Script 1：只负责“计算器 + 解锁 + 弹窗” ============ -->
 <script>
-  /* =============== 0) 顶部 Tab + 自动识别设备（字典界面用） =============== */
-  (function initTabs() {
-    const tabButtons = document.querySelectorAll(".tab-btn");
-    const views = document.querySelectorAll(".view-container");
+  (function () {
+    var PIN_KEY = "secret_pin";
 
-    const isMobile =
-      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(navigator.userAgent) ||
-      window.innerWidth <= 768;
+    var gateDisplayEl = document.getElementById("gateDisplay");
+    var gateInfoEl = document.getElementById("gateInfo");
+    var feedbackMask = document.getElementById("feedbackMask");
+    var feedbackText = document.getElementById("feedbackText");
+    var feedbackCancel = document.getElementById("feedbackCancel");
+    var feedbackSubmit = document.getElementById("feedbackSubmit");
 
-    const defaultTarget = isMobile ? "mobileView" : "desktopView";
+    var calcDisplay = "0";
+    var calcExpr = "";
+    var calcInfo = "";
+    var secretModeActive = false;
+    var secretEqualCount = 0;
 
-    tabButtons.forEach(btn => {
-      const target = btn.getAttribute("data-target");
-      if (target === defaultTarget) {
-        btn.classList.add("active");
+    function renderCalc() {
+      gateDisplayEl.textContent = calcDisplay;
+      gateInfoEl.textContent = calcInfo || "";
+    }
+
+    function resetSecret() {
+      secretModeActive = false;
+      secretEqualCount = 0;
+    }
+
+    function onClear() {
+      calcDisplay = "0";
+      calcExpr = "";
+      calcInfo = "";
+      resetSecret();
+      renderCalc();
+    }
+
+    function onDigit(d) {
+      if (calcDisplay === "0" || calcDisplay === "错误" || calcDisplay === "完成") {
+        calcDisplay = d;
       } else {
-        btn.classList.remove("active");
+        calcDisplay += d;
       }
-    });
-    views.forEach(view => {
-      if (view.id === defaultTarget) {
-        view.classList.add("active");
+      calcExpr += d;
+      calcInfo = "";
+      resetSecret();
+      renderCalc();
+    }
+
+    function onOp(op) {
+      if (!calcExpr) return;
+      var last = calcExpr.charAt(calcExpr.length - 1);
+      if ("+-×÷".indexOf(last) !== -1) {
+        calcExpr = calcExpr.slice(0, -1) + op;
       } else {
-        view.classList.remove("active");
+        calcExpr += op;
       }
+      calcDisplay = calcExpr;
+      calcInfo = "";
+      resetSecret();
+      renderCalc();
+    }
+
+    function evalExpressionSimple(expr) {
+      if (!expr || !expr.trim()) return "0";
+      var cleaned = expr.replace(/ /g, "");
+      var nums = [];
+      var ops = [];
+      var current = "";
+
+      for (var i = 0; i < cleaned.length; i++) {
+        var ch = cleaned.charAt(i);
+        if ((ch >= "0" && ch <= "9") || ch === ".") {
+          current += ch;
+        } else if ("+-×÷".indexOf(ch) !== -1) {
+          if (!current) return null;
+          var v = Number(current);
+          if (!isFinite(v)) return null;
+          nums.push(v);
+          ops.push(ch);
+          current = "";
+        } else {
+          return null;
+        }
+      }
+      if (current) {
+        var v2 = Number(current);
+        if (!isFinite(v2)) return null;
+        nums.push(v2);
+      }
+      if (!nums.length) return null;
+
+      var result = nums[0];
+      for (var j = 0; j < ops.length; j++) {
+        var b = nums[j + 1];
+        if (typeof b === "undefined") return null;
+        var op2 = ops[j];
+        if (op2 === "+") result += b;
+        else if (op2 === "-") result -= b;
+        else if (op2 === "×") result *= b;
+        else if (op2 === "÷") {
+          if (b === 0) return null;
+          result /= b;
+        }
+      }
+      var asLong = Math.trunc(result);
+      return result === asLong ? String(asLong) : String(result);
+    }
+
+    function showApp() {
+      var gate = document.getElementById("gateView");
+      var app = document.getElementById("appView");
+      var title = document.getElementById("mainTitle");
+      if (gate) gate.style.display = "none";
+      if (app) app.style.display = "block";
+      if (title) title.style.display = "block";
+    }
+
+    function openFeedbackDialog() {
+      feedbackText.value = "";
+      feedbackMask.style.display = "flex";
+    }
+
+    function closeFeedbackDialog() {
+      feedbackMask.style.display = "none";
+    }
+
+    feedbackCancel.addEventListener("click", function () {
+      closeFeedbackDialog();
     });
 
-    tabButtons.forEach(btn => {
-      btn.addEventListener("click", () => {
-        const target = btn.getAttribute("data-target");
-        tabButtons.forEach(b => b.classList.remove("active"));
-        views.forEach(v => v.classList.remove("active"));
+    feedbackSubmit.addEventListener("click", function () {
+      var trimmed = feedbackText.value.replace(/^\s+|\s+$/g, "");
+      var isDigitsOnly = trimmed.length > 0 && /^[0-9]+$/.test(trimmed);
 
-        btn.classList.add("active");
-        document.getElementById(target).classList.add("active");
-      });
+      if (isDigitsOnly) {
+        try {
+          window.localStorage.setItem(PIN_KEY, trimmed);
+        } catch (e) {}
+        calcInfo = "反馈已提交。";
+      } else {
+        calcInfo = "反馈已提交。";
+      }
+      renderCalc();
+      closeFeedbackDialog();
     });
+
+    function onEqual() {
+      var exprBefore = calcExpr;
+      var currentPin = null;
+      try {
+        currentPin = window.localStorage.getItem(PIN_KEY);
+      } catch (e) {}
+
+      // 1) 解锁
+      if (currentPin && exprBefore === currentPin) {
+        calcDisplay = "完成";
+        calcInfo = "已解锁";
+        calcExpr = "";
+        resetSecret();
+        renderCalc();
+        showApp();
+        return;
+      }
+
+      // 2) 隐藏入口：1+1 + 连续按 20 次 "="
+      if (!secretModeActive) {
+        if (exprBefore === "1+1") {
+          secretModeActive = true;
+          secretEqualCount = 1;
+        }
+      } else {
+        secretEqualCount += 1;
+      }
+
+      if (secretModeActive && secretEqualCount >= 20) {
+        openFeedbackDialog();
+        resetSecret();
+      }
+
+      // 3) 正常计算
+      var res = evalExpressionSimple(exprBefore);
+      if (res !== null) {
+        calcDisplay = res;
+        calcExpr = res;
+        calcInfo = "";
+      } else {
+        calcDisplay = "错误";
+        calcInfo = "无效表达式";
+      }
+      renderCalc();
+    }
+
+    // 绑定按钮
+    var btns = document.querySelectorAll(".calc-btn");
+    for (var k = 0; k < btns.length; k++) {
+      (function (btn) {
+        var type = btn.getAttribute("data-type");
+        var val = btn.getAttribute("data-val") || "";
+        btn.addEventListener("click", function () {
+          if (type === "digit") onDigit(val);
+          else if (type === "op") onOp(val);
+          else if (type === "clear") onClear();
+          else if (type === "equal") onEqual();
+        });
+      })(btns[k]);
+    }
+
+    renderCalc();
   })();
+</script>
 
-  /* =============== 1) 固定“字符全集” & SplitMix64（字典逻辑） =============== */
-  function fixedCharset() {
-    const chars = [];
-    chars.push("\n");
-    chars.push("\r");
-    chars.push("\t");
-    for (let i = 0x20; i < 0x7F; i++) {
-      chars.push(String.fromCharCode(i));
+<!-- ============ Script 2：字典 / SplitMix64 / Tab（和计算器独立） ============ -->
+<script>
+  (function () {
+    // 顶部 Tab 自动识别设备
+    function initTabs() {
+      var tabButtons = document.querySelectorAll(".tab-btn");
+      var views = document.querySelectorAll(".view-container");
+
+      var isMobile =
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(navigator.userAgent) ||
+        window.innerWidth <= 768;
+
+      var defaultTarget = isMobile ? "mobileView" : "desktopView";
+
+      tabButtons.forEach(function (btn) {
+        var target = btn.getAttribute("data-target");
+        if (target === defaultTarget) {
+          btn.classList.add("active");
+        } else {
+          btn.classList.remove("active");
+        }
+      });
+      views.forEach(function (view) {
+        if (view.id === defaultTarget) {
+          view.classList.add("active");
+        } else {
+          view.classList.remove("active");
+        }
+      });
+
+      tabButtons.forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var target = btn.getAttribute("data-target");
+          tabButtons.forEach(function (b) { b.classList.remove("active"); });
+          views.forEach(function (v) { v.classList.remove("active"); });
+
+          btn.classList.add("active");
+          document.getElementById(target).classList.add("active");
+        });
+      });
     }
-    for (let i = 0xFF01; i < 0xFF5F; i++) {
-      chars.push(String.fromCharCode(i));
-    }
-    chars.push("\u3000");
-    const punct = "，。、！？；：‘’“”【】（）《》〈〉——…·「」『』￥％＃＠＆＋－＝／＼｜～｀";
-    for (const c of punct) {
-      chars.push(c);
-    }
-    for (let i = 0x4E00; i < 0xA000; i++) {
-      chars.push(String.fromCharCode(i));
-    }
-    for (let i = 0x3400; i < 0x4DC0; i++) {
-      chars.push(String.fromCharCode(i));
-    }
-    for (let i = 0x2600; i < 0x27C0; i++) {
-      chars.push(String.fromCharCode(i));
-    }
-    const seen = new Set();
-    const out = [];
-    for (const c of chars) {
-      if (!seen.has(c)) {
-        seen.add(c);
-        out.push(c);
+
+    initTabs();
+
+    // ===== 固定字符全集 & SplitMix64 =====
+    function fixedCharset() {
+      var chars = [];
+      chars.push("\n");
+      chars.push("\r");
+      chars.push("\t");
+      for (var i = 0x20; i < 0x7F; i++) {
+        chars.push(String.fromCharCode(i));
       }
+      for (var j = 0xFF01; j < 0xFF5F; j++) {
+        chars.push(String.fromCharCode(j));
+      }
+      chars.push("\u3000");
+      var punct = "，。、！？；：‘’“”【】（）《》〈〉——…·「」『』￥％＃＠＆＋－＝／＼｜～｀";
+      for (var p = 0; p < punct.length; p++) {
+        chars.push(punct[p]);
+      }
+      for (var a = 0x4E00; a < 0xA000; a++) {
+        chars.push(String.fromCharCode(a));
+      }
+      for (var b = 0x3400; b < 0x4DC0; b++) {
+        chars.push(String.fromCharCode(b));
+      }
+      for (var c = 0x2600; c < 0x27C0; c++) {
+        chars.push(String.fromCharCode(c));
+      }
+      var seen = {};
+      var out = [];
+      for (var idx = 0; idx < chars.length; idx++) {
+        var ch = chars[idx];
+        if (!seen[ch]) {
+          seen[ch] = true;
+          out.push(ch);
+        }
+      }
+      return out;
     }
-    return out;
-  }
 
-  const CHARSET_FIXED = fixedCharset();
-  const MASK64 = (1n << 64n) - 1n;
+    var CHARSET_FIXED = fixedCharset();
+    var MASK64 = (1n << 64n) - 1n;
 
-  class SplitMix64 {
-    constructor(seed) {
+    function SplitMix64(seed) {
       this.state = seed & MASK64;
     }
-    nextU64() {
+    SplitMix64.prototype.nextU64 = function () {
       this.state = (this.state + 0x9e3779b97f4a7c15n) & MASK64;
-      let z = this.state;
+      var z = this.state;
       z = (z ^ (z >> 30n)) * 0xbf58476d1ce4e5b9n & MASK64;
       z = (z ^ (z >> 27n)) * 0x94d049bb133111ebn & MASK64;
       z = z ^ (z >> 31n);
       return z & MASK64;
-    }
-    nextBounded(bound) {
-      const x = this.nextU64();
+    };
+    SplitMix64.prototype.nextBounded = function (bound) {
+      var x = this.nextU64();
       return Number(x % BigInt(bound));
+    };
+
+    async function sha256ToSeedU64(key) {
+      var enc = new TextEncoder();
+      var data = enc.encode(key.trim());
+      if (!window.crypto || !window.crypto.subtle) {
+        throw new Error("当前浏览器不支持 crypto.subtle，请在 HTTPS 环境下使用最新版浏览器。");
+      }
+      var hashBuf = await window.crypto.subtle.digest("SHA-256", data);
+      var hash = new Uint8Array(hashBuf);
+      var seed = 0n;
+      for (var i = 0; i < 8; i++) {
+        seed = (seed << 8n) | BigInt(hash[i]);
+      }
+      return seed & MASK64;
     }
-  }
 
-  async function sha256ToSeedU64(key) {
-    const enc = new TextEncoder();
-    const data = enc.encode(key.trim());
-    if (!window.crypto || !window.crypto.subtle) {
-      throw new Error("当前浏览器不支持 crypto.subtle，请在 HTTPS 环境下使用最新版 Chrome / Edge。");
+    async function charsetFromKey(key) {
+      key = key.trim();
+      if (!key) throw new Error("秘钥不能为空");
+      var seed = await sha256ToSeedU64(key);
+      var rng = new SplitMix64(seed);
+      var shuffled = CHARSET_FIXED.slice();
+      for (var i = shuffled.length - 1; i > 0; i--) {
+        var j = rng.nextBounded(i + 1);
+        var tmp = shuffled[i];
+        shuffled[i] = shuffled[j];
+        shuffled[j] = tmp;
+      }
+      return shuffled;
     }
-    const hashBuf = await crypto.subtle.digest("SHA-256", data);
-    const hash = new Uint8Array(hashBuf);
-    let seed = 0n;
-    for (let i = 0; i < 8; i++) {
-      seed = (seed << 8n) | BigInt(hash[i]);
+
+    // ===== 字典界面状态 =====
+    var shuffled = null;
+    var id2char = null;
+    var char2id = null;
+
+    function enableView(prefix, enabled) {
+      ["btnText2Id", "btnId2Text", "btnCopy", "btnClear"].forEach(function (id) {
+        var el = document.getElementById(id + prefix);
+        if (el) el.disabled = !enabled;
+      });
     }
-    return seed & MASK64;
-  }
 
-  async function charsetFromKey(key) {
-    key = key.trim();
-    if (!key) throw new Error("秘钥不能为空");
-    const seed = await sha256ToSeedU64(key);
-    const rng = new SplitMix64(seed);
-    const shuffled = CHARSET_FIXED.slice();
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = rng.nextBounded(i + 1);
-      const tmp = shuffled[i];
-      shuffled[i] = shuffled[j];
-      shuffled[j] = tmp;
+    function getSep(prefix) {
+      var el = document.getElementById("sepInput" + prefix);
+      if (!el) return " ";
+      var v = el.value;
+      return v === "" ? " " : v;
     }
-    return shuffled;
-  }
 
-  /* =============== 2) 字典界面共用状态 & 函数 =============== */
-  let shuffled = null;
-  let id2char = null;
-  let char2id = null;
+    function updateInfoAll(text) {
+      var d = document.getElementById("infoDesktop");
+      var m = document.getElementById("infoMobile");
+      if (d) d.textContent = text;
+      if (m) m.textContent = text;
+    }
 
-  function enableView(prefix, enabled) {
-    ["btnText2Id", "btnId2Text", "btnCopy", "btnClear"].forEach(id => {
-      const el = document.getElementById(id + prefix);
-      if (el) el.disabled = !enabled;
-    });
-  }
+    function setDictLoadedUI() {
+      var size = shuffled ? shuffled.length : 0;
+      var msg =
+        "字典已加载 ✅  | 字符全集大小：" + size +
+        "\n同秘钥跨设备编号完全一致；不同秘钥编号体系完全不同。";
+      updateInfoAll(msg);
+      enableView("Desktop", true);
+      enableView("Mobile", true);
+    }
 
-  function getSep(prefix) {
-    const el = document.getElementById("sepInput" + prefix);
-    if (!el) return " ";
-    const v = el.value;
-    return v === "" ? " " : v;
-  }
+    function setErrorUI(msg) {
+      updateInfoAll("[错误] " + msg);
+      enableView("Desktop", false);
+      enableView("Mobile", false);
+    }
 
-  function updateInfoAll(text) {
-    const d = document.getElementById("infoDesktop");
-    const m = document.getElementById("infoMobile");
-    if (d) d.textContent = text;
-    if (m) m.textContent = text;
-  }
+    function initView(prefix) {
+      var keyInput   = document.getElementById("keyInput" + prefix);
+      var loadBtn    = document.getElementById("loadBtn" + prefix);
+      var inputArea  = document.getElementById("input" + prefix);
+      var outputArea = document.getElementById("output" + prefix);
+      var btnT2I     = document.getElementById("btnText2Id" + prefix);
+      var btnI2T     = document.getElementById("btnId2Text" + prefix);
+      var btnCopy    = document.getElementById("btnCopy" + prefix);
+      var btnClear   = document.getElementById("btnClear" + prefix);
 
-  function setDictLoadedUI() {
-    const size = shuffled ? shuffled.length : 0;
-    const msg =
-      "字典已加载 ✅  | 字符全集大小：" + size +
-      "\n同秘钥跨设备编号完全一致；不同秘钥编号体系完全不同。";
-    updateInfoAll(msg);
-    enableView("Desktop", true);
-    enableView("Mobile", true);
-  }
+      enableView(prefix, false);
 
-  function setErrorUI(msg) {
-    updateInfoAll("[错误] " + msg);
-    enableView("Desktop", false);
-    enableView("Mobile", false);
-  }
-
-  function initView(prefix) {
-    const keyInput   = document.getElementById("keyInput" + prefix);
-    const loadBtn    = document.getElementById("loadBtn" + prefix);
-    const inputArea  = document.getElementById("input" + prefix);
-    const outputArea = document.getElementById("output" + prefix);
-    const btnT2I     = document.getElementById("btnText2Id" + prefix);
-    const btnI2T     = document.getElementById("btnId2Text" + prefix);
-    const btnCopy    = document.getElementById("btnCopy" + prefix);
-    const btnClear   = document.getElementById("btnClear" + prefix);
-
-    enableView(prefix, false);
-
-    if (loadBtn) {
-      loadBtn.addEventListener("click", async () => {
-        const key = keyInput ? keyInput.value : "";
-        if (!key.trim()) {
-          setErrorUI("秘钥不能为空");
-          return;
-        }
-        loadBtn.disabled = true;
-        updateInfoAll("正在根据秘钥生成字典，请稍候……");
-        try {
-          shuffled = await charsetFromKey(key);
-          id2char = shuffled;
-          char2id = new Map();
-          for (let i = 0; i < shuffled.length; i++) {
-            char2id.set(shuffled[i], i + 1);
+      if (loadBtn) {
+        loadBtn.addEventListener("click", async function () {
+          var key = keyInput ? keyInput.value : "";
+          if (!key.trim()) {
+            setErrorUI("秘钥不能为空");
+            return;
           }
-          setDictLoadedUI();
-        } catch (e) {
-          console.error(e);
-          setErrorUI(e && e.message ? e.message : String(e));
-        } finally {
-          loadBtn.disabled = false;
-        }
-      });
-    }
+          loadBtn.disabled = true;
+          updateInfoAll("正在根据秘钥生成字典，请稍候……");
+          try {
+            shuffled = await charsetFromKey(key);
+            id2char = shuffled;
+            char2id = new Map();
+            for (var i = 0; i < shuffled.length; i++) {
+              char2id.set(shuffled[i], i + 1);
+            }
+            setDictLoadedUI();
+          } catch (e) {
+            console.error(e);
+            setErrorUI(e && e.message ? e.message : String(e));
+          } finally {
+            loadBtn.disabled = false;
+          }
+        });
+      }
 
-    if (btnT2I) {
-      btnT2I.addEventListener("click", () => {
-        if (!char2id) {
-          outputArea.value = "请先输入秘钥并加载字典。";
-          return;
-        }
-        const text = inputArea.value;
-        const sep = getSep(prefix);
-        const ids = [];
-        const missing = [];
-        for (const ch of text) {
-          if (char2id.has(ch)) ids.push(String(char2id.get(ch)));
-          else missing.push(ch);
-        }
-        let out = ids.join(sep);
-        if (missing.length > 0) {
-          out += "\n\n[提示] 下列字符不在固定全集中，无法编码：\n" + missing.join("");
-        }
-        outputArea.value = out;
-      });
-    }
+      if (btnT2I) {
+        btnT2I.addEventListener("click", function () {
+          if (!char2id) {
+            outputArea.value = "请先输入秘钥并加载字典。";
+            return;
+          }
+          var text = inputArea.value;
+          var sep = getSep(prefix);
+          var ids = [];
+          var missing = [];
+          for (var i = 0; i < text.length; i++) {
+            var ch = text[i];
+            if (char2id.has(ch)) ids.push(String(char2id.get(ch)));
+            else missing.push(ch);
+          }
+          var out = ids.join(sep);
+          if (missing.length > 0) {
+            out += "\n\n[提示] 下列字符不在固定全集中，无法编码：\n" + missing.join("");
+          }
+          outputArea.value = out;
+        });
+      }
 
-    if (btnI2T) {
-      btnI2T.addEventListener("click", () => {
-        if (!id2char) {
-          outputArea.value = "请先输入秘钥并加载字典。";
-          return;
-        }
-        const raw = inputArea.value.trim();
-        if (!raw) {
+      if (btnI2T) {
+        btnI2T.addEventListener("click", function () {
+          if (!id2char) {
+            outputArea.value = "请先输入秘钥并加载字典。";
+            return;
+          }
+          var raw = inputArea.value.trim();
+          if (!raw) {
+            outputArea.value = "";
+            return;
+          }
+          var parts = raw.split(/[,\s;、，；]+/);
+          var n = id2char.length;
+          var outChars = [];
+          var bad = [];
+          parts.forEach(function (p) {
+            if (!p) return;
+            var num = Number.parseInt(p, 10);
+            if (!Number.isFinite(num)) {
+              bad.push(p);
+              return;
+            }
+            if (num >= 1 && num <= n) outChars.push(id2char[num - 1]);
+            else bad.push(p);
+          });
+          var textOut = outChars.join("");
+          if (bad.length > 0) {
+            textOut += "\n\n[提示] 无效/超范围编号已忽略：\n" + JSON.stringify(bad, null, 2);
+          }
+          outputArea.value = textOut;
+        });
+      }
+
+      if (btnCopy) {
+        btnCopy.addEventListener("click", async function () {
+          try {
+            await navigator.clipboard.writeText(outputArea.value || "");
+            alert("输出内容已复制到剪贴板。");
+          } catch (e) {
+            console.error(e);
+            alert("复制失败，请手动 Ctrl+C。");
+          }
+        });
+      }
+
+      if (btnClear) {
+        btnClear.addEventListener("click", function () {
+          inputArea.value = "";
           outputArea.value = "";
-          return;
-        }
-        const parts = raw.split(/[,\s;、，；]+/);
-        const n = id2char.length;
-        const outChars = [];
-        const bad = [];
-        for (const p of parts) {
-          if (!p) continue;
-          const num = Number.parseInt(p, 10);
-          if (!Number.isFinite(num)) {
-            bad.push(p);
-            continue;
-          }
-          if (num >= 1 && num <= n) outChars.push(id2char[num - 1]);
-          else bad.push(p);
-        }
-        let text = outChars.join("");
-        if (bad.length > 0) {
-          text += "\n\n[提示] 无效/超范围编号已忽略：\n" + JSON.stringify(bad, null, 2);
-        }
-        outputArea.value = text;
-      });
-    }
-
-    if (btnCopy) {
-      btnCopy.addEventListener("click", async () => {
-        try {
-          await navigator.clipboard.writeText(outputArea.value || "");
-          alert("输出内容已复制到剪贴板。");
-        } catch (e) {
-          console.error(e);
-          alert("复制失败，请手动 Ctrl+C。");
-        }
-      });
-    }
-
-    if (btnClear) {
-      btnClear.addEventListener("click", () => {
-        inputArea.value = "";
-        outputArea.value = "";
-      });
-    }
-  }
-
-  initView("Desktop");
-  initView("Mobile");
-
-  /* =============== 3) 计算器伪装逻辑（解锁前置） =============== */
-  const PIN_KEY = "secret_pin";
-
-  const gateDisplayEl = document.getElementById("gateDisplay");
-  const gateInfoEl = document.getElementById("gateInfo");
-  const feedbackMask = document.getElementById("feedbackMask");
-  const feedbackText = document.getElementById("feedbackText");
-  const feedbackCancel = document.getElementById("feedbackCancel");
-  const feedbackSubmit = document.getElementById("feedbackSubmit");
-
-  let calcDisplay = "0";
-  let calcExpr = "";
-  let calcInfo = "";
-  let secretModeActive = false;
-  let secretEqualCount = 0;
-
-  function renderCalc() {
-    gateDisplayEl。textContent = calcDisplay;
-    gateInfoEl.textContent = calcInfo || "";
-  }
-
-  function resetSecret() {
-    secretModeActive = false;
-    secretEqualCount = 0;
-  }
-
-  function onClear() {
-    calcDisplay = "0";
-    calcExpr = "";
-    calcInfo = "";
-    resetSecret();
-    renderCalc();
-  }
-
-  function onDigit(d) {
-    if (calcDisplay === "0" || calcDisplay === "错误" || calcDisplay === "完成") {
-      calcDisplay = d;
-    } else {
-      calcDisplay += d;
-    }
-    calcExpr += d;
-    calcInfo = "";
-    resetSecret();
-    renderCalc();
-  }
-
-  function onOp(op) {
-    if (!calcExpr) return;
-    const last = calcExpr[calcExpr。length - 1];
-    if ("+-×÷"。includes(last)) {
-      calcExpr = calcExpr.slice(0, -1) + op;
-    } else {
-      calcExpr += op;
-    }
-    calcDisplay = calcExpr;
-    calcInfo = "";
-    resetSecret();
-    renderCalc();
-  }
-
-  function evalExpressionSimple(expr) {
-    if (!expr.trim()) return "0";
-    const cleaned = expr.replace(/ /g, "");
-    const nums = [];
-    const ops = [];
-    let current = "";
-    for (const ch / cleaned) {
-      if ((ch >= "0" && ch <= "9") || ch === ".") {
-        current += ch;
-      } else if ("+-×÷"。includes(ch)) {
-        if (!current) return null;
-        const v = Number(current);
-        if (!Number.isFinite(v)) return null;
-        nums.push(v);
-        ops.push(ch);
-        current = "";
-      } else {
-        return null;
+        });
       }
     }
-    if (current) {
-      const v = Number(current);
-      if (!Number.isFinite(v)) return null;
-      nums.push(v);
-    }
-    if (!nums.length) return null;
 
-    let result = nums[0];
-    for (let i = 0; i < ops.length; i++) {
-      const b = nums[i + 1];
-      if (b === undefined) return null;
-      const op = ops[i];
-      if (op === "+") result += b;
-      else if (op === "-") result -= b;
-      else if (op === "×") result *= b;
-      else if (op === "÷") {
-        if (b === 0) return null;
-        result /= b;
-      }
-    }
-    const asLong = Math.trunc(result);
-    return result === asLong ? String(asLong) : String(result);
-  }
-
-  function showApp() {
-    const gate = document.getElementById("gateView");
-    const app = document.getElementById("appView");
-    const title = document.getElementById("mainTitle");
-    if (gate) gate.style.display = "none";
-    if (app) app.style.display = "block";
-    if (title) title.style.display = "block";
-  }
-
-  function openFeedbackDialog() {
-    feedbackText.value = "";
-    feedbackMask.style.display = "flex";
-  }
-
-  function closeFeedbackDialog() {
-    feedbackMask.style.display = "none";
-  }
-
-  feedbackCancel.addEventListener("click", () => {
-    closeFeedbackDialog();
-  });
-
-  feedbackSubmit.addEventListener("click", () => {
-    const trimmed = feedbackText.value.trim();
-    const isDigitsOnly = trimmed.length > 0 && /^[0-9]+$/.test(trimmed);
-    if (isDigitsOnly) {
-      localStorage.setItem(PIN_KEY, trimmed);
-      calcInfo = "反馈已提交。";
-    } else {
-      calcInfo = "反馈已提交。";
-    }
-    renderCalc();
-    closeFeedbackDialog();
-  });
-
-  function onEqual() {
-    const exprBefore = calcExpr;
-    const currentPin = localStorage.getItem(PIN_KEY);
-
-    // 1) 解锁
-    if (currentPin && exprBefore === currentPin) {
-      calcDisplay = "完成";
-      calcInfo = "已解锁";
-      calcExpr = "";
-      resetSecret();
-      renderCalc();
-      showApp();
-      return;
-    }
-
-    // 2) 隐藏入口：1+1 + 连续按 20 次 =
-    if (!secretModeActive) {
-      if (exprBefore === "1+1") {
-        secretModeActive = true;
-        secretEqualCount = 1;
-      }
-    } else {
-      secretEqualCount += 1;
-    }
-
-    if (secretModeActive && secretEqualCount >= 20) {
-      openFeedbackDialog();
-      resetSecret();
-    }
-
-    // 3) 普通计算
-    const res = evalExpressionSimple(exprBefore);
-    if (res !== null) {
-      calcDisplay = res;
-      calcExpr = res;
-      calcInfo = "";
-    } else {
-      calcDisplay = "错误";
-      calcInfo = "无效表达式";
-    }
-    renderCalc();
-  }
-
-  document.querySelectorAll(".calc-btn").forEach(btn => {
-    const 输入 = btn.getAttribute("data-type");
-    const val = btn.getAttribute("data-val") || "";
-    btn.addEventListener("click", () => {
-      if (输入 === "digit") onDigit(val);
-      else if (输入 === "op") onOp(val);
-      else if (输入 === "clear") onClear();
-      else if (输入 === "equal") onEqual();
-    });
-  });
-
-  renderCalc(); // 初始渲染
+    initView("Desktop");
+    initView("Mobile");
+  })();
 </script>
 </body>
 </html>
