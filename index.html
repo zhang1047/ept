@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <title>秘钥字典：文字 &lt;-&gt; 编号（网页版）</title>
+
+  <!-- 让手机上按真实宽度渲染，避免整个缩成小一块 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <style>
     body {
       margin: 0;
@@ -10,7 +14,7 @@
       background: #121212;
       color: #E6E6E6;
       font-family: "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      font-size: 14px;
+      font-size: 16px;
     }
     .panel {
       max-width: 1100px;
@@ -94,7 +98,7 @@
       font-weight: bold;
     }
 
-    /* ===== 顶部 Tab 样式 ===== */
+    /* ===== 顶部 Tab 样式（字典界面用） ===== */
     .tabs {
       display: flex;
       margin-bottom: 12px;
@@ -114,7 +118,6 @@
       color: #FFFFFF;
       border-bottom: 2px solid #2A82DA;
     }
-
     .view-container {
       display: none;
     }
@@ -122,7 +125,7 @@
       display: block;
     }
 
-    /* 手机版整体稍微窄一点、按钮更高一点（参考安卓 Compose 的 16dp padding + 56dp 高度） */
+    /* ===== 手机版字典布局 ===== */
     .mobile-layout textarea {
       min-height: 140px;
     }
@@ -144,6 +147,89 @@
       width: 100%;
     }
 
+    /* ===== 计算器布局 ===== */
+    #gateView {
+      margin-top: 8px;
+    }
+    .calc-header-title {
+      font-size: 18px;
+      margin-bottom: 4px;
+    }
+    .calc-header-sub {
+      font-size: 13px;
+      color: #BBBBBB;
+    }
+    .calc-display {
+      margin-top: 16px;
+      background: #1E1E1E;
+      border-radius: 8px;
+      padding: 12px;
+      text-align: right;
+      font-size: 26px;
+      min-height: 40px;
+      box-sizing: border-box;
+    }
+    .calc-grid {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .calc-grid button {
+      height: 52px;
+      font-size: 18px;
+    }
+    .calc-equal {
+      grid-column: 1 / span 4;
+    }
+
+    /* ===== 意见反馈弹窗 ===== */
+    .dialog-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+    .dialog {
+      background: #1E1E1E;
+      border-radius: 12px;
+      padding: 16px;
+      max-width: 480px;
+      width: 90%;
+      box-sizing: border-box;
+    }
+    .dialog-title {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+    .dialog-body p {
+      margin: 0 0 8px;
+      font-size: 14px;
+      color: #DDDDDD;
+    }
+    .dialog-body textarea {
+      width: 100%;
+      min-height: 80px;
+      background: #000000;
+      color: #FFFFFF;
+      border: 1px solid #444444;
+      border-radius: 8px;
+      padding: 6px;
+      box-sizing: border-box;
+      font-size: 14px;
+      resize: vertical;
+    }
+    .dialog-actions {
+      margin-top: 12px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
     @media (max-width: 768px) {
       .panel {
         padding: 12px;
@@ -155,106 +241,149 @@
 <div class="panel">
   <h1>秘钥字典：文字 &lt;-&gt; 编号</h1>
 
-  <!-- 顶部 Tab 切换 -->
-  <div class="tabs">
-    <button class="tab-btn active" data-target="desktopView">电脑版</button>
-    <button class="tab-btn" data-target="mobileView">手机版</button>
-  </div>
-
-  <!-- 电脑版视图 -->
-  <div id="desktopView" class="view-container active">
-    <!-- 秘钥区 -->
-    <div class="row">
-      <label for="keyInputDesktop">秘钥：</label>
-      <input id="keyInputDesktop" type="password" class="grow"
-             placeholder="同秘钥跨设备编号一致；不同秘钥完全不同" />
-      <button id="loadBtnDesktop">加载字典</button>
+  <!-- ================== 计算器伪装界面（前置） ================== -->
+  <div id="gateView">
+    <div class="calc-header">
+      <div class="calc-header-title">计算器</div>
+      <div class="calc-header-sub">一个简单的计算器</div>
     </div>
-    <div id="infoDesktop" class="info">
-      字典未加载，请先输入秘钥并点击【加载字典】
-    </div>
+    <div id="gateDisplay" class="calc-display">0</div>
+    <div id="gateInfo" class="info"></div>
 
-    <!-- 分隔符区 -->
-    <div class="row">
-      <label for="sepInputDesktop">编号分隔符（默认空格）：</label>
-      <input id="sepInputDesktop" type="text" value=" " style="width: 80px;" />
-    </div>
+    <div class="calc-grid">
+      <button class="calc-btn" data-type="digit" data-val="7">7</button>
+      <button class="calc-btn" data-type="digit" data-val="8">8</button>
+      <button class="calc-btn" data-type="digit" data-val="9">9</button>
+      <button class="calc-btn" data-type="op" data-val="÷">÷</button>
 
-    <!-- 输入输出 -->
-    <div class="section-title">输入（任意文字或编号序列）：</div>
-    <textarea id="inputDesktop" placeholder="先加载字典，然后输入任意文本（含空格/标点）或编号序列"></textarea>
+      <button class="calc-btn" data-type="digit" data-val="4">4</button>
+      <button class="calc-btn" data-type="digit" data-val="5">5</button>
+      <button class="calc-btn" data-type="digit" data-val="6">6</button>
+      <button class="calc-btn" data-type="op" data-val="×">×</button>
 
-    <div class="section-title">输出：</div>
-    <textarea id="outputDesktop" readonly></textarea>
+      <button class="calc-btn" data-type="digit" data-val="1">1</button>
+      <button class="calc-btn" data-type="digit" data-val="2">2</button>
+      <button class="calc-btn" data-type="digit" data-val="3">3</button>
+      <button class="calc-btn" data-type="op" data-val="-">-</button>
 
-    <!-- 按钮区 -->
-    <div class="row" style="margin-top: 8px;">
-      <button id="btnText2IdDesktop" disabled>文字 → 编号</button>
-      <button id="btnId2TextDesktop" disabled>编号 → 文字</button>
-      <span class="grow"></span>
-      <button id="btnCopyDesktop" disabled>复制输出</button>
-      <button id="btnClearDesktop" disabled>清空</button>
+      <button class="calc-btn" data-type="digit" data-val="0">0</button>
+      <button class="calc-btn" data-type="digit" data-val=".">.</button>
+      <button class="calc-btn" data-type="clear">C</button>
+      <button class="calc-btn" data-type="op" data-val="+">+</button>
+
+      <button class="calc-btn calc-equal" data-type="equal">=</button>
     </div>
   </div>
 
-  <!-- 手机版视图 -->
-  <div id="mobileView" class="view-container mobile-layout">
-    <!-- 顶部说明 + 秘钥 -->
-    <div class="row row-top">
-      <div style="margin-bottom:6px;">
-        <div style="font-weight:bold;">秘钥字典（手机版）</div>
-        <div style="font-size:12px;color:#BBBBBB;">同一秘钥下，编号跨设备一致；不同秘钥完全不同。</div>
+  <!-- ================== 真正的字典界面（解锁后才显示） ================== -->
+  <div id="appView" style="display:none;">
+
+    <!-- 顶部 Tab：电脑版 / 手机版 -->
+    <div class="tabs">
+      <button class="tab-btn active" data-target="desktopView">电脑版</button>
+      <button class="tab-btn" data-target="mobileView">手机版</button>
+    </div>
+
+    <!-- 电脑版视图 -->
+    <div id="desktopView" class="view-container active">
+      <div class="row">
+        <label for="keyInputDesktop">秘钥：</label>
+        <input id="keyInputDesktop" type="password" class="grow"
+               placeholder="同秘钥跨设备编号一致；不同秘钥完全不同" />
+        <button id="loadBtnDesktop">加载字典</button>
       </div>
-      <input id="keyInputMobile" type="password"
-             placeholder="输入秘钥..." />
-      <div style="margin-top:6px;display:flex;gap:8px;">
-        <button id="loadBtnMobile" style="flex:1;">加载字典</button>
+      <div id="infoDesktop" class="info">
+        字典未加载，请先输入秘钥并点击【加载字典】
+      </div>
+
+      <div class="row">
+        <label for="sepInputDesktop">编号分隔符（默认空格）：</label>
+        <input id="sepInputDesktop" type="text" value=" " style="width: 80px;" />
+      </div>
+
+      <div class="section-title">输入（任意文字或编号序列）：</div>
+      <textarea id="inputDesktop"
+                placeholder="先加载字典，然后输入任意文本（含空格/标点）或编号序列"></textarea>
+
+      <div class="section-title">输出：</div>
+      <textarea id="outputDesktop" readonly></textarea>
+
+      <div class="row" style="margin-top: 8px;">
+        <button id="btnText2IdDesktop" disabled>文字 → 编号</button>
+        <button id="btnId2TextDesktop" disabled>编号 → 文字</button>
+        <span class="grow"></span>
+        <button id="btnCopyDesktop" disabled>复制输出</button>
+        <button id="btnClearDesktop" disabled>清空</button>
       </div>
     </div>
-    <div id="infoMobile" class="info">
-      字典未加载，请先输入秘钥并点击【加载字典】
+
+    <!-- 手机版视图 -->
+    <div id="mobileView" class="view-container mobile-layout">
+      <div class="row row-top">
+        <div style="margin-bottom:6px;">
+          <div style="font-weight:bold;">秘钥字典（手机版）</div>
+          <div style="font-size:12px;color:#BBBBBB;">同一秘钥下，编号跨设备一致；不同秘钥完全不同。</div>
+        </div>
+        <input id="keyInputMobile" type="password"
+               placeholder="输入秘钥..." />
+        <div style="margin-top:6px;display:flex;gap:8px;">
+          <button id="loadBtnMobile" style="flex:1;">加载字典</button>
+        </div>
+      </div>
+      <div id="infoMobile" class="info">
+        字典未加载，请先输入秘钥并点击【加载字典】
+      </div>
+
+      <div class="row">
+        <label for="sepInputMobile">编号分隔符：</label>
+        <input id="sepInputMobile" type="text" value=" " style="width: 80px;" />
+        <span style="font-size:12px;color:#888888;">空则默认为空格</span>
+      </div>
+
+      <div class="section-title">输入</div>
+      <textarea id="inputMobile"
+                placeholder="输入任意文字（含空格/标点）或编号序列"></textarea>
+
+      <div class="section-title">输出</div>
+      <textarea id="outputMobile" readonly></textarea>
+
+      <div class="row-buttons">
+        <button id="btnText2IdMobile" disabled>文字 → 编号</button>
+        <button id="btnId2TextMobile" disabled>编号 → 文字</button>
+        <button id="btnCopyMobile" disabled>复制输出</button>
+        <button id="btnClearMobile" disabled>清空</button>
+      </div>
     </div>
+  </div>
+</div>
 
-    <!-- 分隔符 -->
-    <div class="row">
-      <label for="sepInputMobile">编号分隔符：</label>
-      <input id="sepInputMobile" type="text" value=" " style="width: 80px;" />
-      <span style="font-size:12px;color:#888888;">空则默认为空格</span>
+<!-- 意见反馈 / 设置密码 弹窗 -->
+<div id="feedbackMask" class="dialog-mask">
+  <div class="dialog">
+    <div class="dialog-title">意见反馈</div>
+    <div class="dialog-body">
+      <p>欢迎反馈使用体验或建议。输入纯数字则会作为本设备的解锁密码（PIN）。</p>
+      <textarea id="feedbackText" placeholder="在此输入反馈内容，或只输入数字设置/修改密码"></textarea>
     </div>
-
-    <!-- 输入 -->
-    <div class="section-title">输入</div>
-    <textarea id="inputMobile"
-              placeholder="输入任意文字（含空格/标点）或编号序列"></textarea>
-
-    <!-- 输出 -->
-    <div class="section-title">输出</div>
-    <textarea id="outputMobile" readonly></textarea>
-
-    <!-- 按钮（大按钮、两列） -->
-    <div class="row-buttons">
-      <button id="btnText2IdMobile" disabled>文字 → 编号</button>
-      <button id="btnId2TextMobile" disabled>编号 → 文字</button>
-      <button id="btnCopyMobile" disabled>复制输出</button>
-      <button id="btnClearMobile" disabled>清空</button>
+    <div class="dialog-actions">
+      <button id="feedbackCancel">取消</button>
+      <button id="feedbackSubmit">提交</button>
     </div>
   </div>
 </div>
 
 <script>
-  /* =============== 顶部 Tab 切换 + 自动识别设备 =============== */
+  /* =============== 0) 顶部 Tab + 自动识别设备（字典界面用） =============== */
   (function initTabs() {
     const tabButtons = document.querySelectorAll(".tab-btn");
     const views = document.querySelectorAll(".view-container");
 
-    // 1) 自动判断当前是否为移动设备（UA + 屏幕宽度双重判断）
     const isMobile =
       /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(navigator.userAgent) ||
       window.innerWidth <= 768;
 
     const defaultTarget = isMobile ? "mobileView" : "desktopView";
 
-    // 2) 根据判断结果，设置默认激活的 tab 和 view
     tabButtons.forEach(btn => {
       const target = btn.getAttribute("data-target");
       if (target === defaultTarget) {
@@ -271,7 +400,6 @@
       }
     });
 
-    // 3) 仍然支持手动点击切换
     tabButtons.forEach(btn => {
       btn.addEventListener("click", () => {
         const target = btn.getAttribute("data-target");
@@ -284,48 +412,32 @@
     });
   })();
 
-  // =============== 1) 固定“字符全集” ===============
+  /* =============== 1) 固定“字符全集” & SplitMix64（字典逻辑） =============== */
   function fixedCharset() {
     const chars = [];
-
-    // 空白/控制
     chars.push("\n");
     chars.push("\r");
     chars.push("\t");
-
-    // ASCII 可见 0x20..0x7E
     for (let i = 0x20; i < 0x7F; i++) {
       chars.push(String.fromCharCode(i));
     }
-
-    // 全角 ASCII 0xFF01..0xFF5E
     for (let i = 0xFF01; i < 0xFF5F; i++) {
       chars.push(String.fromCharCode(i));
     }
-    chars.push("\u3000"); // 全角空格
-
-    // 常见中文标点（顺序须与安卓一致）
+    chars.push("\u3000");
     const punct = "，。、！？；：‘’“”【】（）《》〈〉——…·「」『』￥％＃＠＆＋－＝／＼｜～｀";
     for (const c of punct) {
       chars.push(c);
     }
-
-    // CJK 统一汉字 U+4E00..U+9FFF (到 0xA000 之前)
     for (let i = 0x4E00; i < 0xA000; i++) {
       chars.push(String.fromCharCode(i));
     }
-
-    // CJK 扩展A U+3400..0x4DBF (到 0x4DC0 之前)
     for (let i = 0x3400; i < 0x4DC0; i++) {
       chars.push(String.fromCharCode(i));
     }
-
-    // 常见符号区 U+2600..U+27BF (到 0x27C0 之前)
     for (let i = 0x2600; i < 0x27C0; i++) {
       chars.push(String.fromCharCode(i));
     }
-
-    // 保序去重
     const seen = new Set();
     const out = [];
     for (const c of chars) {
@@ -340,7 +452,6 @@
   const CHARSET_FIXED = fixedCharset();
   const MASK64 = (1n << 64n) - 1n;
 
-  // =============== 2) SplitMix64 ===============
   class SplitMix64 {
     constructor(seed) {
       this.state = seed & MASK64;
@@ -359,18 +470,14 @@
     }
   }
 
-  // 计算 SHA256(key)，取前 8 字节为种子（大端无符号）
   async function sha256ToSeedU64(key) {
     const enc = new TextEncoder();
     const data = enc.encode(key.trim());
-
     if (!window.crypto || !window.crypto.subtle) {
       throw new Error("当前浏览器不支持 crypto.subtle，请在 HTTPS 环境下使用最新版 Chrome / Edge。");
     }
-
     const hashBuf = await crypto.subtle.digest("SHA-256", data);
     const hash = new Uint8Array(hashBuf);
-
     let seed = 0n;
     for (let i = 0; i < 8; i++) {
       seed = (seed << 8n) | BigInt(hash[i]);
@@ -380,14 +487,10 @@
 
   async function charsetFromKey(key) {
     key = key.trim();
-    if (!key) {
-      throw new Error("秘钥不能为空");
-    }
+    if (!key) throw new Error("秘钥不能为空");
     const seed = await sha256ToSeedU64(key);
     const rng = new SplitMix64(seed);
     const shuffled = CHARSET_FIXED.slice();
-
-    // Fisher-Yates 洗牌
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = rng.nextBounded(i + 1);
       const tmp = shuffled[i];
@@ -397,17 +500,13 @@
     return shuffled;
   }
 
-  // =============== 3) 共用的逻辑状态（两套界面共享） ===============
+  /* =============== 2) 字典界面共用状态 & 函数 =============== */
   let shuffled = null;
   let id2char = null;
   let char2id = null;
 
   function enableView(prefix, enabled) {
-    const ids = [
-      "btnText2Id", "btnId2Text",
-      "btnCopy", "btnClear"
-    ];
-    ids.forEach(id => {
+    ["btnText2Id", "btnId2Text", "btnCopy", "btnClear"].forEach(id => {
       const el = document.getElementById(id + prefix);
       if (el) el.disabled = !enabled;
     });
@@ -421,10 +520,10 @@
   }
 
   function updateInfoAll(text) {
-    const desk = document.getElementById("infoDesktop");
-    const mob = document.getElementById("infoMobile");
-    if (desk) desk.textContent = text;
-    if (mob) mob.textContent = text;
+    const d = document.getElementById("infoDesktop");
+    const m = document.getElementById("infoMobile");
+    if (d) d.textContent = text;
+    if (m) m.textContent = text;
   }
 
   function setDictLoadedUI() {
@@ -443,7 +542,6 @@
     enableView("Mobile", false);
   }
 
-  // =============== 4) 为某个前缀视图注册事件 ===============
   function initView(prefix) {
     const keyInput   = document.getElementById("keyInput" + prefix);
     const loadBtn    = document.getElementById("loadBtn" + prefix);
@@ -454,7 +552,6 @@
     const btnCopy    = document.getElementById("btnCopy" + prefix);
     const btnClear   = document.getElementById("btnClear" + prefix);
 
-    // 初始禁用按钮
     enableView(prefix, false);
 
     if (loadBtn) {
@@ -466,7 +563,6 @@
         }
         loadBtn.disabled = true;
         updateInfoAll("正在根据秘钥生成字典，请稍候……");
-
         try {
           shuffled = await charsetFromKey(key);
           id2char = shuffled;
@@ -484,7 +580,6 @@
       });
     }
 
-    // 文字 -> 编号
     if (btnT2I) {
       btnT2I.addEventListener("click", () => {
         if (!char2id) {
@@ -495,15 +590,10 @@
         const sep = getSep(prefix);
         const ids = [];
         const missing = [];
-
         for (const ch of text) {
-          if (char2id.has(ch)) {
-            ids.push(String(char2id.get(ch)));
-          } else {
-            missing.push(ch);
-          }
+          if (char2id.has(ch)) ids.push(String(char2id.get(ch)));
+          else missing.push(ch);
         }
-
         let out = ids.join(sep);
         if (missing.length > 0) {
           out += "\n\n[提示] 下列字符不在固定全集中，无法编码：\n" + missing.join("");
@@ -512,7 +602,6 @@
       });
     }
 
-    // 编号 -> 文字（用 \s，支持空格分隔，不会只还原第一个字）
     if (btnI2T) {
       btnI2T.addEventListener("click", () => {
         if (!id2char) {
@@ -524,13 +613,10 @@
           outputArea.value = "";
           return;
         }
-        // 支持：空格、英文逗号/分号、中文逗号/分号、顿号
         const parts = raw.split(/[,\s;、，；]+/);
-
         const n = id2char.length;
         const outChars = [];
         const bad = [];
-
         for (const p of parts) {
           if (!p) continue;
           const num = Number.parseInt(p, 10);
@@ -538,13 +624,9 @@
             bad.push(p);
             continue;
           }
-          if (num >= 1 && num <= n) {
-            outChars.push(id2char[num - 1]);
-          } else {
-            bad.push(p);
-          }
+          if (num >= 1 && num <= n) outChars.push(id2char[num - 1]);
+          else bad.push(p);
         }
-
         let text = outChars.join("");
         if (bad.length > 0) {
           text += "\n\n[提示] 无效/超范围编号已忽略：\n" + JSON.stringify(bad, null, 2);
@@ -553,7 +635,6 @@
       });
     }
 
-    // 复制输出
     if (btnCopy) {
       btnCopy.addEventListener("click", async () => {
         try {
@@ -566,7 +647,6 @@
       });
     }
 
-    // 清空
     if (btnClear) {
       btnClear.addEventListener("click", () => {
         inputArea.value = "";
@@ -575,9 +655,201 @@
     }
   }
 
-  // 初始化两套界面
   initView("Desktop");
   initView("Mobile");
+
+  /* =============== 3) 计算器伪装逻辑（解锁前置） =============== */
+  const PIN_KEY = "secret_pin";
+
+  const gateDisplayEl = document.getElementById("gateDisplay");
+  const gateInfoEl = document.getElementById("gateInfo");
+  const feedbackMask = document.getElementById("feedbackMask");
+  const feedbackText = document.getElementById("feedbackText");
+  const feedbackCancel = document.getElementById("feedbackCancel");
+  const feedbackSubmit = document.getElementById("feedbackSubmit");
+
+  let calcDisplay = "0";
+  let calcExpr = "";
+  let calcInfo = "";
+  let secretModeActive = false;
+  let secretEqualCount = 0;
+
+  function renderCalc() {
+    gateDisplayEl.textContent = calcDisplay;
+    gateInfoEl.textContent = calcInfo || "";
+  }
+
+  function resetSecret() {
+    secretModeActive = false;
+    secretEqualCount = 0;
+  }
+
+  function onClear() {
+    calcDisplay = "0";
+    calcExpr = "";
+    calcInfo = "";
+    resetSecret();
+    renderCalc();
+  }
+
+  function onDigit(d) {
+    if (calcDisplay === "0" || calcDisplay === "错误" || calcDisplay === "完成") {
+      calcDisplay = d;
+    } else {
+      calcDisplay += d;
+    }
+    calcExpr += d;
+    calcInfo = "";
+    resetSecret();
+    renderCalc();
+  }
+
+  function onOp(op) {
+    if (!calcExpr) return;
+    const last = calcExpr[calcExpr.length - 1];
+    if ("+-×÷".includes(last)) {
+      calcExpr = calcExpr.slice(0, -1) + op;
+    } else {
+      calcExpr += op;
+    }
+    calcDisplay = calcExpr;
+    calcInfo = "";
+    resetSecret();
+    renderCalc();
+  }
+
+  function evalExpressionSimple(expr) {
+    if (!expr.trim()) return "0";
+    const cleaned = expr.replace(/ /g, "");
+    const nums = [];
+    const ops = [];
+    let current = "";
+    for (const ch of cleaned) {
+      if ((ch >= "0" && ch <= "9") || ch === ".") {
+        current += ch;
+      } else if ("+-×÷".includes(ch)) {
+        if (!current) return null;
+        const v = Number(current);
+        if (!Number.isFinite(v)) return null;
+        nums.push(v);
+        ops.push(ch);
+        current = "";
+      } else {
+        return null;
+      }
+    }
+    if (current) {
+      const v = Number(current);
+      if (!Number.isFinite(v)) return null;
+      nums.push(v);
+    }
+    if (!nums.length) return null;
+
+    let result = nums[0];
+    for (let i = 0; i < ops.length; i++) {
+      const b = nums[i + 1];
+      if (b === undefined) return null;
+      const op = ops[i];
+      if (op === "+") result += b;
+      else if (op === "-") result -= b;
+      else if (op === "×") result *= b;
+      else if (op === "÷") {
+        if (b === 0) return null;
+        result /= b;
+      }
+    }
+    const asLong = Math.trunc(result);
+    return result === asLong ? String(asLong) : String(result);
+  }
+
+  function showApp() {
+    const gate = document.getElementById("gateView");
+    const app = document.getElementById("appView");
+    if (gate) gate.style.display = "none";
+    if (app) app.style.display = "block";
+  }
+
+  function openFeedbackDialog() {
+    feedbackText.value = "";
+    feedbackMask.style.display = "flex";
+  }
+
+  function closeFeedbackDialog() {
+    feedbackMask.style.display = "none";
+  }
+
+  feedbackCancel.addEventListener("click", () => {
+    closeFeedbackDialog();
+  });
+
+  feedbackSubmit.addEventListener("click", () => {
+    const trimmed = feedbackText.value.trim();
+    const isDigitsOnly = trimmed.length > 0 && /^[0-9]+$/.test(trimmed);
+    if (isDigitsOnly) {
+      localStorage.setItem(PIN_KEY, trimmed);
+      calcInfo = "反馈已提交。";
+    } else {
+      calcInfo = "反馈已提交。";
+    }
+    renderCalc();
+    closeFeedbackDialog();
+  });
+
+  function onEqual() {
+    const exprBefore = calcExpr;
+    const currentPin = localStorage.getItem(PIN_KEY);
+
+    // 1) 尝试解锁：只有已经设置过 PIN 时才生效
+    if (currentPin && exprBefore === currentPin) {
+      calcDisplay = "完成";
+      calcInfo = "已解锁";
+      calcExpr = "";
+      resetSecret();
+      renderCalc();
+      showApp();
+      return;
+    }
+
+    // 2) 隐藏入口：1+1 然后 20 次 =
+    if (!secretModeActive) {
+      if (exprBefore === "1+1") {
+        secretModeActive = true;
+        secretEqualCount = 1;
+      }
+    } else {
+      secretEqualCount += 1;
+    }
+
+    if (secretModeActive && secretEqualCount >= 20) {
+      openFeedbackDialog();
+      resetSecret();
+    }
+
+    // 3) 正常计算器功能
+    const res = evalExpressionSimple(exprBefore);
+    if (res !== null) {
+      calcDisplay = res;
+      calcExpr = res;
+      calcInfo = "";
+    } else {
+      calcDisplay = "错误";
+      calcInfo = "无效表达式";
+    }
+    renderCalc();
+  }
+
+  document.querySelectorAll(".calc-btn").forEach(btn => {
+    const type = btn.getAttribute("data-type");
+    const val = btn.getAttribute("data-val") || "";
+    btn.addEventListener("click", () => {
+      if (type === "digit") onDigit(val);
+      else if (type === "op") onOp(val);
+      else if (type === "clear") onClear();
+      else if (type === "equal") onEqual();
+    });
+  });
+
+  renderCalc(); // 初始渲染
 </script>
 </body>
 </html>
