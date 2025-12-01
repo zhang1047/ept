@@ -125,24 +125,6 @@
       display: block;
     }
 
-    /* 一键伪装按钮样式（单独的 class，避免被当成 Tab） */
-    .fake-btn {
-      margin-left: auto;
-      padding: 6px 12px;
-      border-radius: 8px;
-      background: #1E1E1E;
-      color: #AAAAAA;
-      border: 1px solid #333333;
-      cursor: pointer;
-      font-size: 13px;
-    }
-    .fake-btn:hover {
-      background: #2A2A2A;
-    }
-    .fake-btn:active {
-      background: #333333;
-    }
-
     /* 手机版字典布局 */
     .mobile-layout textarea {
       min-height: 140px;
@@ -300,8 +282,8 @@
     <div class="tabs">
       <button class="tab-btn active" data-target="desktopView">电脑版</button>
       <button class="tab-btn" data-target="mobileView">手机版</button>
-      <!-- 一键伪装：单独 class，避免被 Tab 脚本当成切换按钮 -->
-      <button id="btnFake" class="fake-btn">一键伪装</button>
+      <!-- 一键伪装按钮（不加 tab-btn，不影响 Tab 逻辑） -->
+      <button id="btnFake" style="margin-left:auto;">一键伪装</button>
     </div>
 
     <!-- 电脑版 -->
@@ -342,9 +324,9 @@
       <div class="row row-top">
         <div style="margin-bottom:6px;">
           <div style="font-weight:bold;">秘钥字典（手机版）</div>
-          <div style="font-size:12px;color:#BBBBBB;">同秘钥，编号跨设备一致；不同秘钥不同。</div>
+          <div style="font-size:12px;color:#BBBBBB;">同一秘钥下，编号跨设备一致；不同秘钥完全不同。</div>
         </div>
-        <input id="keyInputMobile" 输入="password"
+        <input id="keyInputMobile" type="password"
                placeholder="输入秘钥..." />
         <div style="margin-top:6px;display:flex;gap:8px;">
           <button id="loadBtnMobile" style="flex:1;">加载字典</button>
@@ -382,8 +364,8 @@
   <div class="dialog">
     <div class="dialog-title">意见反馈</div>
     <div class="dialog-body">
-      <p>欢迎反馈使用体验或建议。</p>
-      <textarea id="feedbackText" placeholder="在此输入反馈内容"></textarea>
+      <p>欢迎反馈使用体验或建议。输入纯数字则会作为本设备的解锁密码（PIN）。</p>
+      <textarea id="feedbackText" placeholder="在此输入反馈内容，或只输入数字设置/修改密码"></textarea>
     </div>
     <div class="dialog-actions">
       <button id="feedbackCancel">取消</button>
@@ -411,8 +393,8 @@
     var secretEqualCount = 0;
 
     function renderCalc() {
-      gateDisplayEl。textContent = calcDisplay;
-      gateInfoEl。textContent = calcInfo || "";
+      gateDisplayEl.textContent = calcDisplay;
+      gateInfoEl.textContent = calcInfo || "";
     }
 
     function resetSecret() {
@@ -442,9 +424,9 @@
 
     function onOp(op) {
       if (!calcExpr) return;
-      var last = calcExpr。charAt(calcExpr。length - 1);
-      if ("+-×÷"。indexOf(last) !== -1) {
-        calcExpr = calcExpr。slice(0, -1) + op;
+      var last = calcExpr.charAt(calcExpr.length - 1);
+      if ("+-×÷".indexOf(last) !== -1) {
+        calcExpr = calcExpr.slice(0, -1) + op;
       } else {
         calcExpr += op;
       }
@@ -509,7 +491,7 @@
       if (title) title.style.display = "block";
     }
 
-    // 一键伪装：回到计算器界面，隐藏标题和字典
+    // 新增：切回计算器界面
     function showCalc() {
       var gate = document.getElementById("gateView");
       var app = document.getElementById("appView");
@@ -533,8 +515,8 @@
     });
 
     feedbackSubmit.addEventListener("click", function () {
-      var trimmed = feedbackText。value。替换(/^\s+|\s+$/g， "");
-      var isDigitsOnly = trimmed。length > 0 && /^[0-9]+$/。test(trimmed);
+      var trimmed = feedbackText.value.replace(/^\s+|\s+$/g, "");
+      var isDigitsOnly = trimmed.length > 0 && /^[0-9]+$/.test(trimmed);
 
       if (isDigitsOnly) {
         try {
@@ -595,12 +577,12 @@
     }
 
     // 绑定按钮
-    var btns = document。querySelectorAll(".calc-btn");
+    var btns = document.querySelectorAll(".calc-btn");
     for (var k = 0; k < btns.length; k++) {
       (function (btn) {
         var type = btn.getAttribute("data-type");
         var val = btn.getAttribute("data-val") || "";
-        btn。addEventListener("click"， function () {
+        btn.addEventListener("click", function () {
           if (type === "digit") onDigit(val);
           else if (type === "op") onOp(val);
           else if (type === "clear") onClear();
@@ -609,7 +591,7 @@
       })(btns[k]);
     }
 
-    // 暴露给外部的“一键伪装”接口
+    // 新增：暴露给 Script 2 的“一键伪装”函数
     window.fakeLockToCalc = function () {
       calcDisplay = "0";
       calcExpr = "";
@@ -667,7 +649,7 @@
 
     initTabs();
 
-    // 一键伪装按钮：调用计算器脚本里的 fakeLockToCalc
+    // 新增：一键伪装按钮，调用 Script 1 暴露的 fakeLockToCalc
     var fakeBtn = document.getElementById("btnFake");
     if (fakeBtn) {
       fakeBtn.addEventListener("click", function () {
