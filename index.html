@@ -16,7 +16,7 @@
       font-family: "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       font-size: 16px;
     }
-    .panel {
+    。panel {
       max-width: 1100px;
       margin: 0 auto;
       padding: 16px;
@@ -606,9 +606,10 @@
 </script>
 
 <!-- ============ Script 2：字典 / SplitMix64 / Tab（保持你原来的代码，不做任何修改） ============ -->
+<!-- ============ Script 2：字典 / SplitMix64 / Tab（重写版，避免语法错误） ============ -->
 <script>
   (function () {
-    // 顶部 Tab 自动识别设备
+    // ===== 顶部 Tab 自动识别设备 =====
     function initTabs() {
       var tabButtons = document.querySelectorAll(".tab-btn");
       var views = document.querySelectorAll(".view-container");
@@ -627,6 +628,7 @@
           btn.classList.remove("active");
         }
       });
+
       views.forEach(function (view) {
         if (view.id === defaultTarget) {
           view.classList.add("active");
@@ -638,43 +640,57 @@
       tabButtons.forEach(function (btn) {
         btn.addEventListener("click", function () {
           var target = btn.getAttribute("data-target");
+          if (!target) return;
           tabButtons.forEach(function (b) { b.classList.remove("active"); });
           views.forEach(function (v) { v.classList.remove("active"); });
 
           btn.classList.add("active");
-          document.getElementById(target).classList.add("active");
+          var viewEl = document.getElementById(target);
+          if (viewEl) {
+            viewEl.classList.add("active");
+          }
         });
       });
     }
 
     initTabs();
 
-    // ===== 固定字符全集 & SplitMix64 =====
+    // ===== 固定字符全集 =====
     function fixedCharset() {
       var chars = [];
+      // 空白 / 控制
       chars.push("\n");
       chars.push("\r");
       chars.push("\t");
+      // ASCII 可见字符
       for (var i = 0x20; i < 0x7F; i++) {
         chars.push(String.fromCharCode(i));
       }
+      // 全角 ASCII
       for (var j = 0xFF01; j < 0xFF5F; j++) {
         chars.push(String.fromCharCode(j));
       }
+      // 全角空格
       chars.push("\u3000");
+      // 常见中文标点
       var punct = "，。、！？；：‘’“”【】（）《》〈〉——…·「」『』￥％＃＠＆＋－＝／＼｜～｀";
       for (var p = 0; p < punct.length; p++) {
         chars.push(punct[p]);
       }
+      // CJK 统一汉字
       for (var a = 0x4E00; a < 0xA000; a++) {
         chars.push(String.fromCharCode(a));
       }
+      // CJK 扩展 A
       for (var b = 0x3400; b < 0x4DC0; b++) {
         chars.push(String.fromCharCode(b));
       }
+      // 常用符号区
       for (var c = 0x2600; c < 0x27C0; c++) {
         chars.push(String.fromCharCode(c));
       }
+
+      // 去重
       var seen = {};
       var out = [];
       for (var idx = 0; idx < chars.length; idx++) {
@@ -688,24 +704,36 @@
     }
 
     var CHARSET_FIXED = fixedCharset();
-    var MASK64 = (1n << 64n) - 1n;
+
+    // ===== SplitMix64（用 BigInt() 写法，避免 xxxn 字面量） =====
+    var MASK64 = (BigInt(1) << BigInt(64)) - BigInt(1);
 
     function SplitMix64(seed) {
       this.state = seed & MASK64;
     }
+
     SplitMix64.prototype.nextU64 = function () {
-      this.state = (this.state + 0x9e3779b97f4a7c15n) & MASK64;
+      this.state =
+        (this.state + BigInt("0x9e3779b97f4a7c15")) & MASK64;
       var z = this.state;
-      z = (z ^ (z >> 30n)) * 0xbf58476d1ce4e5b9n & MASK64;
-      z = (z ^ (z >> 27n)) * 0x94d049bb133111ebn & MASK64;
-      z = z ^ (z >> 31n);
+      z =
+        (z ^ (z >> BigInt(30))) *
+        BigInt("0xbf58476d1ce4e5b9");
+      z &= MASK64;
+      z =
+        (z ^ (z >> BigInt(27))) *
+        BigInt("0x94d049bb133111eb");
+      z &= MASK64;
+      z = z ^ (z >> BigInt(31));
       return z & MASK64;
     };
+
     SplitMix64.prototype.nextBounded = function (bound) {
       var x = this.nextU64();
       return Number(x % BigInt(bound));
     };
 
+    // ===== SHA-256 → 64bit seed =====
     async function sha256ToSeedU64(key) {
       var enc = new TextEncoder();
       var data = enc.encode(key.trim());
@@ -714,19 +742,21 @@
       }
       var hashBuf = await window.crypto.subtle.digest("SHA-256", data);
       var hash = new Uint8Array(hashBuf);
-      var seed = 0n;
+      var seed = BigInt(0);
       for (var i = 0; i < 8; i++) {
-        seed = (seed << 8n) | BigInt(hash[i]);
+        seed = (seed << BigInt(8)) | BigInt(hash[i]);
       }
       return seed & MASK64;
     }
 
+    // ===== 根据秘钥生成打乱后的字符表 =====
     async function charsetFromKey(key) {
       key = key.trim();
       if (!key) throw new Error("秘钥不能为空");
       var seed = await sha256ToSeedU64(key);
       var rng = new SplitMix64(seed);
       var shuffled = CHARSET_FIXED.slice();
+      // Fisher-Yates 洗牌
       for (var i = shuffled.length - 1; i > 0; i--) {
         var j = rng.nextBounded(i + 1);
         var tmp = shuffled[i];
@@ -736,15 +766,18 @@
       return shuffled;
     }
 
-    // ===== 字典界面状态 =====
+    // ===== 字典状态 =====
     var shuffled = null;
     var id2char = null;
     var char2id = null;
 
     function enableView(prefix, enabled) {
-      ["btnText2Id", "btnId2Text", "btnCopy", "btnClear"].forEach(function (id) {
+      var ids = ["btnText2Id", "btnId2Text", "btnCopy", "btnClear"];
+      ids.forEach(function (id) {
         var el = document.getElementById(id + prefix);
-        if (el) el.disabled = !enabled;
+        if (el) {
+          el.disabled = !enabled;
+        }
       });
     }
 
@@ -778,6 +811,7 @@
       enableView("Mobile", false);
     }
 
+    // ===== 初始化单个界面（PC / Mobile 共用） =====
     function initView(prefix) {
       var keyInput   = document.getElementById("keyInput" + prefix);
       var loadBtn    = document.getElementById("loadBtn" + prefix);
@@ -791,7 +825,7 @@
       enableView(prefix, false);
 
       if (loadBtn) {
-        loadBtn.addEventListener("click", async function () {
+        loadBtn.addEventListener("click", function () {
           var key = keyInput ? keyInput.value : "";
           if (!key.trim()) {
             setErrorUI("秘钥不能为空");
@@ -799,20 +833,23 @@
           }
           loadBtn.disabled = true;
           updateInfoAll("正在根据秘钥生成字典，请稍候……");
-          try {
-            shuffled = await charsetFromKey(key);
-            id2char = shuffled;
-            char2id = new Map();
-            for (var i = 0; i < shuffled.length; i++) {
-              char2id.set(shuffled[i], i + 1);
-            }
-            setDictLoadedUI();
-          } catch (e) {
-            console.error(e);
-            setErrorUI(e && e.message ? e.message : String(e));
-          } finally {
-            loadBtn.disabled = false;
-          }
+          charsetFromKey(key)
+            .then(function (shuf) {
+              shuffled = shuf;
+              id2char = shuffled;
+              char2id = new Map();
+              for (var i = 0; i < shuffled.length; i++) {
+                char2id.set(shuffled[i], i + 1);
+              }
+              setDictLoadedUI();
+            })
+            .catch(function (e) {
+              console.error(e);
+              setErrorUI(e && e.message ? e.message : String(e));
+            })
+            .finally(function () {
+              loadBtn.disabled = false;
+            });
         });
       }
 
@@ -822,14 +859,17 @@
             outputArea.value = "请先输入秘钥并加载字典。";
             return;
           }
-          var text = inputArea.value;
+          var text = inputArea.value || "";
           var sep = getSep(prefix);
           var ids = [];
           var missing = [];
           for (var i = 0; i < text.length; i++) {
             var ch = text[i];
-            if (char2id.has(ch)) ids.push(String(char2id.get(ch)));
-            else missing.push(ch);
+            if (char2id.has(ch)) {
+              ids.push(String(char2id.get(ch)));
+            } else {
+              missing.push(ch);
+            }
           }
           var out = ids.join(sep);
           if (missing.length > 0) {
@@ -845,7 +885,7 @@
             outputArea.value = "请先输入秘钥并加载字典。";
             return;
           }
-          var raw = inputArea.value.trim();
+          var raw = (inputArea.value || "").trim();
           if (!raw) {
             outputArea.value = "";
             return;
@@ -854,39 +894,57 @@
           var n = id2char.length;
           var outChars = [];
           var bad = [];
-          parts.forEach(function (p) {
-            if (!p) return;
-            var num = Number.parseInt(p, 10);
-            if (!Number.isFinite(num)) {
+          for (var i = 0; i < parts.length; i++) {
+            var p = parts[i];
+            if (!p) continue;
+            var num = parseInt(p, 10);
+            if (!isFinite(num)) {
               bad.push(p);
-              return;
+              continue;
             }
-            if (num >= 1 && num <= n) outChars.push(id2char[num - 1]);
-            else bad.push(p);
-          });
-          var textOut = outChars。join("");
+            if (num >= 1 && num <= n) {
+              outChars.push(id2char[num - 1]);
+            } else {
+              bad.push(p);
+            }
+          }
+          var textOut = outChars.join("");
           if (bad.length > 0) {
             textOut += "\n\n[提示] 无效/超范围编号已忽略：\n" + JSON.stringify(bad, null, 2);
           }
-          outputArea。value = textOut;
+          outputArea.value = textOut;
         });
       }
 
       if (btnCopy) {
-        btnCopy。addEventListener("click"， async function () {
-          try {
-            await navigator.clipboard.writeText(outputArea.value || "");
-            alert("输出内容已复制到剪贴板。");
-          } catch (e) {
-            console。error(e);
-            alert("复制失败，请手动 Ctrl+C。");
+        btnCopy.addEventListener("click", function () {
+          var text = outputArea.value || "";
+          if (!navigator.clipboard || !navigator.clipboard.writeText) {
+            try {
+              // 兼容性 fallback（可能会失败）
+              var textarea = document.createElement("textarea");
+              textarea.value = text;
+              document.body.appendChild(textarea);
+              textarea.select();
+              document.execCommand("copy");
+              document.body.removeChild(textarea);
+              alert("输出内容已复制到剪贴板。");
+            } catch (e) {
+              alert("复制失败，请手动 Ctrl+C。");
+            }
+            return;
           }
+          navigator.clipboard.writeText(text).then(function () {
+            alert("输出内容已复制到剪贴板。");
+          }).catch(function () {
+            alert("复制失败，请手动 Ctrl+C。");
+          });
         });
       }
 
       if (btnClear) {
-        btnClear。addEventListener("click"， function () {
-          inputArea。value = "";
+        btnClear.addEventListener("click", function () {
+          inputArea.value = "";
           outputArea.value = "";
         });
       }
@@ -896,6 +954,7 @@
     initView("Mobile");
   })();
 </script>
+
 
 <!-- ============ Script 3：单独给“一键伪装”绑事件，完全不动 Script 2 ============ -->
 <script>
