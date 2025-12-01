@@ -16,7 +16,7 @@
       font-family: "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       font-size: 16px;
     }
-    .panel {
+    。panel {
       max-width: 1100px;
       margin: 0 auto;
       padding: 16px;
@@ -223,7 +223,7 @@
       font-size: 14px;
       resize: vertical;
     }
-    .dialog-actions {
+    。dialog-actions {
       margin-top: 12px;
       display: flex;
       justify-content: flex-end;
@@ -231,7 +231,7 @@
     }
 
     @media (max-width: 768px) {
-      .panel {
+      。panel {
         padding: 12px;
       }
     }
@@ -239,7 +239,7 @@
 </head>
 <body>
 <div class="panel">
-  <h1>秘钥字典：文字 &lt;-&gt; 编号</h1>
+  <h1 id="mainTitle" style="display:none;">秘钥字典：文字 &lt;-&gt; 编号</h1>
 
   <!-- ================== 计算器伪装界面（前置） ================== -->
   <div id="gateView">
@@ -336,7 +336,7 @@
 
       <div class="row">
         <label for="sepInputMobile">编号分隔符：</label>
-        <input id="sepInputMobile" type="text" value=" " style="width: 80px;" />
+        <input id="sepInputMobile" 输入="text" value=" " style="width: 80px;" />
         <span style="font-size:12px;color:#888888;">空则默认为空格</span>
       </div>
 
@@ -362,7 +362,7 @@
   <div class="dialog">
     <div class="dialog-title">意见反馈</div>
     <div class="dialog-body">
-      <p>欢迎反馈使用体验或建议。输入纯数字则会作为本设备的解锁密码（PIN）。</p>
+      <p>欢迎反馈使用体验或建议。</p>
       <textarea id="feedbackText" placeholder="在此输入反馈内容，或只输入数字设置/修改密码"></textarea>
     </div>
     <div class="dialog-actions">
@@ -765,8 +765,10 @@
   function showApp() {
     const gate = document.getElementById("gateView");
     const app = document.getElementById("appView");
+    const title = document.getElementById("mainTitle");
     if (gate) gate.style.display = "none";
     if (app) app.style.display = "block";
+    if (title) title.style.display = "block";
   }
 
   function openFeedbackDialog() {
@@ -775,18 +777,18 @@
   }
 
   function closeFeedbackDialog() {
-    feedbackMask.style.display = "none";
+    feedbackMask.style。display = "none";
   }
 
-  feedbackCancel.addEventListener("click", () => {
+  feedbackCancel.addEventListener("click"， () => {
     closeFeedbackDialog();
   });
 
   feedbackSubmit.addEventListener("click", () => {
-    const trimmed = feedbackText.value.trim();
-    const isDigitsOnly = trimmed.length > 0 && /^[0-9]+$/.test(trimmed);
+    const trimmed = feedbackText。value。trim();
+    const isDigitsOnly = trimmed。length > 0 && /^[0-9]+$/。test(trimmed);
     if (isDigitsOnly) {
-      localStorage.setItem(PIN_KEY, trimmed);
+      localStorage.setItem(PIN_KEY， trimmed);
       calcInfo = "反馈已提交。";
     } else {
       calcInfo = "反馈已提交。";
@@ -797,7 +799,7 @@
 
   function onEqual() {
     const exprBefore = calcExpr;
-    const currentPin = localStorage.getItem(PIN_KEY);
+    const currentPin = localStorage。getItem(PIN_KEY);
 
     // 1) 尝试解锁：只有已经设置过 PIN 时才生效
     if (currentPin && exprBefore === currentPin) {
